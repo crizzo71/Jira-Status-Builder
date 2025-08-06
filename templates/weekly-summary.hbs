@@ -27,9 +27,9 @@
 **Context:** {{manualInput.velocityHighlights.anomalies}}
 {{/if}}
 
-### 1.2 Key Activities and Accomplishments
+### 1.2 Key Epic-Level Accomplishments
 
-**Completed Work:**
+**Completed Epics and Major Initiatives:**
 {{#each completed}}
 - **[{{this.key}}]({{this.url}})** - {{this.summary}}
   - Type: {{this.issuetype}} | Priority: {{this.priority}}
@@ -39,7 +39,7 @@
 {{/each}}
 
 {{#unless completed.length}}
-_No major work items were completed during this period._
+_No Epic-level work items were completed during this period._
 {{/unless}}
 
 **Milestones Reached:**
@@ -97,9 +97,9 @@ _No individual recognition reported._
 
 ## 3.0 Roadmap and Forward-Looking Items
 
-### 3.1 Upcoming Priorities
+### 3.1 Upcoming Epic-Level Priorities
 
-**In Progress Work:**
+**Epics and Major Initiatives In Progress:**
 {{#each inProgress}}
 - **[{{this.key}}]({{this.url}})** - {{this.summary}}
   - Status: {{this.status}} | Priority: {{this.priority}}
@@ -109,7 +109,7 @@ _No individual recognition reported._
 {{/each}}
 
 {{#unless inProgress.length}}
-_No work currently in progress._
+_No Epic-level work currently in progress._
 {{/unless}}
 
 **Next Period Focus:**
@@ -128,15 +128,44 @@ _No significant blockers or risks identified._
 
 ---
 
-## 4.0 Detailed Metrics
+## 4.0 Development Activity Trends
 
-### 4.1 Work Breakdown
+### 4.1 Sub-Epic Work Item Analysis
+
+**Summary:** {{subEpicTrends.totalItems}} stories, tasks, and sub-tasks completed or in progress
+
+**Completion Rate:** {{subEpicTrends.completionRate}}% of development items completed this period
+
+**Activity Breakdown:**
+{{#each subEpicTrends.summary.topTypes}}
+- **{{this.type}}**: {{this.total}} items ({{this.completionRate}}% complete)
+{{/each}}
+
+**Current Activity:**
+- **Active Items**: {{subEpicTrends.summary.activeItems}} stories/tasks in progress
+- **New This Week**: {{subEpicTrends.summary.newThisWeek}} new development items
+- **Needs Attention**: {{subEpicTrends.summary.needingAttention}} items requiring review
+
+{{#if subEpicTrends.weeklyMetrics}}
+**Weekly Development Throughput:**
+{{#each subEpicTrends.weeklyMetrics}}
+- **{{this.period}}**: {{this.completed}} items completed
+{{/each}}
+{{/if}}
+
+---
+
+## 5.0 Detailed Metrics
+
+### 5.1 Epic-Level Work Breakdown
 - **Total Issues Reviewed:** {{totalIssues}}
-- **Completed Issues:** {{completed.length}}
-- **In Progress Issues:** {{inProgress.length}}
-- **Issues Requiring Attention:** {{needsAttention.length}}
+- **Epic-Level Issues:** {{epicIssues}}
+- **Sub-Epic Development Items:** {{subEpicIssues}}
+- **Completed Epics:** {{completed.length}}
+- **Epics In Progress:** {{inProgress.length}}
+- **Epics Requiring Attention:** {{needsAttention.length}}
 
-### 4.2 Issues Requiring Attention
+### 5.2 Epics Requiring Attention
 {{#each needsAttention}}
 - **[{{this.key}}]({{this.url}})** - {{this.summary}}
   - Status: {{this.status}}

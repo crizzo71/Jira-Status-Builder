@@ -56,6 +56,22 @@ export class ReportGenerator {
     const oneWeekAgo = moment().subtract(7, 'days');
     
     const categorized = {
+      // Epic-level items (main report content)
+      epics: {
+        completed: [],
+        inProgress: [],
+        newIssues: [],
+        needsAttention: []
+      },
+      // Sub-Epic level items (trend analysis)
+      subEpicItems: {
+        completed: [],
+        inProgress: [],
+        newIssues: [],
+        needsAttention: [],
+        all: []
+      },
+      // Legacy structure for backward compatibility
       completed: [],
       inProgress: [],
       newIssues: [],
@@ -66,6 +82,7 @@ export class ReportGenerator {
       const created = moment(issue.created);
       const updated = moment(issue.updated);
       const status = (issue.status || '').toLowerCase();
+      const issueType = (issue.issuetype || issue.type || '').toLowerCase();
       
       // Normalize issue data from jira-cli format
       const normalizedIssue = {
@@ -83,30 +100,44 @@ export class ReportGenerator {
         parent: issue.parent
       };
       
+      // Determine if this is an Epic-level item
+      const isEpicLevel = issueType === 'epic' || issueType === 'initiative' || issueType === 'theme';
+      const targetCategory = isEpicLevel ? categorized.epics : categorized.subEpicItems;
+      
+      // Add to sub-epic items 'all' array for trend analysis
+      if (!isEpicLevel) {
+        categorized.subEpicItems.all.push(normalizedIssue);
+      }
+      
       // Check if issue was created this week
       if (created.isAfter(oneWeekAgo)) {
-        categorized.newIssues.push(normalizedIssue);
+        targetCategory.newIssues.push(normalizedIssue);
+        categorized.newIssues.push(normalizedIssue); // Legacy compatibility
       }
       
       // Check completion status
       if (issue.resolution && 
           ['done', 'resolved', 'closed', 'fixed'].some(s => status.includes(s))) {
-        categorized.completed.push(normalizedIssue);
+        targetCategory.completed.push(normalizedIssue);
+        categorized.completed.push(normalizedIssue); // Legacy compatibility
       }
       
       // Check in progress
       else if (['in progress', 'in review', 'testing', 'code review'].some(s => status.includes(s))) {
-        categorized.inProgress.push(normalizedIssue);
+        targetCategory.inProgress.push(normalizedIssue);
+        categorized.inProgress.push(normalizedIssue); // Legacy compatibility
       }
       
       // Check for issues needing attention (stale, blocked, etc.)
       const daysSinceUpdate = now.diff(updated, 'days');
       if (daysSinceUpdate > 3 && !issue.resolution) {
-        categorized.needsAttention.push({
+        const attentionIssue = {
           ...normalizedIssue,
           lastUpdated: updated.format('YYYY-MM-DD'),
           reason: daysSinceUpdate > 7 ? 'Stale (no updates for over a week)' : 'No recent updates'
-        });
+        };
+        targetCategory.needsAttention.push(attentionIssue);
+        categorized.needsAttention.push(attentionIssue); // Legacy compatibility
       }
     });
 
@@ -169,6 +200,73 @@ export class ReportGenerator {
     };
   }
 
+  generateSubEpicTrendAnalysis(subEpicItems, velocityData) {
+    const trendAnalysis = {
+      totalItems: subEpicItems.all.length,
+      byType: {},
+      byStatus: {},
+      completionRate: 0,
+      weeklyMetrics: []
+    };
+
+    // Analyze by issue type
+    subEpicItems.all.forEach(item => {
+      const type = item.issuetype || 'Unknown';
+      if (!trendAnalysis.byType[type]) {
+        trendAnalysis.byType[type] = { total: 0, completed: 0, inProgress: 0 };
+      }
+      trendAnalysis.byType[type].total++;
+      
+      if (item.resolution) {
+        trendAnalysis.byType[type].completed++;
+      } else if (['in progress', 'in review', 'testing', 'code review'].some(s => 
+        (item.status || '').toLowerCase().includes(s))) {
+        trendAnalysis.byType[type].inProgress++;
+      }
+    });
+
+    // Analyze by status
+    subEpicItems.all.forEach(item => {
+      const status = item.status || 'Unknown';
+      trendAnalysis.byStatus[status] = (trendAnalysis.byStatus[status] || 0) + 1;
+    });
+
+    // Calculate completion rate
+    const completedItems = subEpicItems.completed.length;
+    trendAnalysis.completionRate = subEpicItems.all.length > 0 
+      ? Math.round((completedItems / subEpicItems.all.length) * 100) 
+      : 0;
+
+    // Generate weekly metrics from velocity data for sub-epic items
+    if (velocityData && velocityData.length > 0) {
+      trendAnalysis.weeklyMetrics = velocityData.map(period => ({
+        period: period.weekEnding || period.sprint || 'Period',
+        completed: period.completedCount || 0,
+        storyPoints: period.storyPoints || 0
+      }));
+    }
+
+    // Create readable summary
+    const topIssueTypes = Object.entries(trendAnalysis.byType)
+      .sort(([,a], [,b]) => b.total - a.total)
+      .slice(0, 3)
+      .map(([type, data]) => ({
+        type,
+        total: data.total,
+        completed: data.completed,
+        completionRate: data.total > 0 ? Math.round((data.completed / data.total) * 100) : 0
+      }));
+
+    trendAnalysis.summary = {
+      topTypes: topIssueTypes,
+      activeItems: subEpicItems.inProgress.length,
+      newThisWeek: subEpicItems.newIssues.length,
+      needingAttention: subEpicItems.needsAttention.length
+    };
+
+    return trendAnalysis;
+  }
+
   async generateExecutiveReport(issues, velocityData, manualInput, project = null, boards = []) {
     const template = await this.loadTemplate('weekly-summary');
     const categorized = this.categorizeJiraCliIssues(issues);
@@ -201,9 +299,14 @@ export class ReportGenerator {
       }
     }
     
+    // Generate trend analysis for sub-Epic items
+    const subEpicTrends = this.generateSubEpicTrendAnalysis(categorized.subEpicItems, velocityData);
+    
     const data = {
       dateRange: `${startDate} - ${endDate}`,
       totalIssues: issues.length,
+      epicIssues: categorized.epics.completed.length + categorized.epics.inProgress.length + categorized.epics.newIssues.length,
+      subEpicIssues: categorized.subEpicItems.all.length,
       generatedOn: moment().format('YYYY-MM-DD HH:mm:ss'),
       projectInfo: projectInfo,
       teamName: teamName,
@@ -212,7 +315,14 @@ export class ReportGenerator {
       manualInput: manualInput || {},
       boards: boards || [],
       multiBoard: boards && boards.length > 1,
-      ...categorized
+      subEpicTrends: subEpicTrends,
+      // Use Epic-level items for main content
+      completed: categorized.epics.completed,
+      inProgress: categorized.epics.inProgress,
+      newIssues: categorized.epics.newIssues,
+      needsAttention: categorized.epics.needsAttention,
+      // Include full categorized data for template flexibility
+      categorized: categorized
     };
 
     return template(data);
@@ -299,9 +409,14 @@ export class ReportGenerator {
       }
     }
     
+    // Generate trend analysis for sub-Epic items
+    const subEpicTrends = this.generateSubEpicTrendAnalysis(categorized.subEpicItems, velocityData);
+    
     const data = {
       dateRange: `${startDate} - ${endDate}`,
       totalIssues: issues.length,
+      epicIssues: categorized.epics.completed.length + categorized.epics.inProgress.length + categorized.epics.newIssues.length,
+      subEpicIssues: categorized.subEpicItems.all.length,
       generatedOn: moment().format('YYYY-MM-DD HH:mm:ss'),
       projectInfo: projectInfo,
       teamName: teamName,
@@ -310,7 +425,14 @@ export class ReportGenerator {
       manualInput: manualInput || {},
       boards: boards || [],
       multiBoard: boards && boards.length > 1,
+      subEpicTrends: subEpicTrends,
       workBreakdown: this.calculateWorkBreakdown(categorized),
+      // HTML template expects different variable names
+      completedIssues: categorized.epics.completed,
+      inProgressIssues: categorized.epics.inProgress,
+      newIssues: categorized.epics.newIssues,
+      issuesNeedingAttention: categorized.epics.needsAttention,
+      // Include original categorized data for template flexibility
       ...categorized
     };
 
@@ -321,6 +443,9 @@ export class ReportGenerator {
     const template = await this.loadTemplate('plain-text');
     const categorized = this.categorizeJiraCliIssues(issues);
     const velocity = this.calculateVelocityMetrics(velocityData);
+    
+    // Generate trend analysis for sub-Epic items
+    const subEpicTrends = this.generateSubEpicTrendAnalysis(categorized.subEpicItems, velocityData);
     
     const startDate = moment().subtract(1, 'weeks').format('MMM DD');
     const endDate = moment().format('MMM DD, YYYY');
@@ -352,6 +477,8 @@ export class ReportGenerator {
     const data = {
       dateRange: `${startDate} - ${endDate}`,
       totalIssues: issues.length,
+      epicIssues: categorized.epics.completed.length + categorized.epics.inProgress.length + categorized.epics.newIssues.length,
+      subEpicIssues: categorized.subEpicItems.all.length,
       generatedOn: moment().format('YYYY-MM-DD HH:mm:ss'),
       projectInfo: projectInfo,
       teamName: teamName,
@@ -360,8 +487,15 @@ export class ReportGenerator {
       manualInput: manualInput || {},
       boards: boards || [],
       multiBoard: boards && boards.length > 1,
+      subEpicTrends: subEpicTrends,
       workBreakdown: this.calculateWorkBreakdown(categorized),
-      ...categorized
+      // Use Epic-level items for main content
+      completed: categorized.epics.completed,
+      inProgress: categorized.epics.inProgress,
+      newIssues: categorized.epics.newIssues,
+      needsAttention: categorized.epics.needsAttention,
+      // Include full categorized data for template flexibility
+      categorized: categorized
     };
 
     return template(data);

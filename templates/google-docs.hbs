@@ -149,10 +149,10 @@
     {{/if}}
 </div>
 
-<h3>1.2 Key Activities and Accomplishments</h3>
+<h3>1.2 Key Epic-Level Accomplishments</h3>
 
 {{#if completedIssues}}
-<h4>Completed Work:</h4>
+<h4>Completed Epics and Major Initiatives:</h4>
 {{#each completedIssues}}
 <div class="issue-item">
     <a href="{{this.url}}" class="issue-key">{{this.key}}</a> - {{this.summary}}<br>
@@ -185,11 +185,57 @@
 <p><em>No celebrations reported for this period.</em></p>
 {{/if}}
 
-<h2>3.0 Roadmap and Forward-Looking</h2>
+<h2>3.0 Development Activity Trends</h2>
 
-<h3>3.1 Upcoming Priorities</h3>
+<h3>3.1 Sub-Epic Work Item Analysis</h3>
+<div class="metric-box">
+    <strong>Summary:</strong> {{subEpicTrends.totalItems}} stories, tasks, and sub-tasks completed or in progress<br>
+    <strong>Completion Rate:</strong> {{subEpicTrends.completionRate}}% of development items completed this period
+</div>
+
+<h4>Activity Breakdown:</h4>
+<table>
+    <thead>
+        <tr>
+            <th>Issue Type</th>
+            <th>Total Items</th>
+            <th>Completion Rate</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{#each subEpicTrends.summary.topTypes}}
+        <tr>
+            <td>{{this.type}}</td>
+            <td>{{this.total}}</td>
+            <td>{{this.completionRate}}%</td>
+        </tr>
+        {{/each}}
+    </tbody>
+</table>
+
+<h4>Current Activity:</h4>
+<div class="section-summary">
+    <strong>Active Items:</strong> {{subEpicTrends.summary.activeItems}} stories/tasks in progress<br>
+    <strong>New This Week:</strong> {{subEpicTrends.summary.newThisWeek}} new development items<br>
+    <strong>Needs Attention:</strong> {{subEpicTrends.summary.needingAttention}} items requiring review
+</div>
+
+{{#if subEpicTrends.weeklyMetrics}}
+<h4>Weekly Development Throughput:</h4>
+<div class="velocity-data">
+    {{#each subEpicTrends.weeklyMetrics}}
+    <div class="velocity-item">
+        <strong>{{this.period}}:</strong> {{this.completed}} items completed
+    </div>
+    {{/each}}
+</div>
+{{/if}}
+
+<h2>4.0 Roadmap and Forward-Looking</h2>
+
+<h3>4.1 Upcoming Epic-Level Priorities</h3>
 {{#if inProgressIssues}}
-<h4>Current Work in Progress:</h4>
+<h4>Epics and Major Initiatives in Progress:</h4>
 {{#each inProgressIssues}}
 <div class="issue-item">
     <a href="{{this.url}}" class="issue-key">{{this.key}}</a> - {{this.summary}}<br>
@@ -222,9 +268,9 @@
 {{/each}}
 {{/if}}
 
-<h2>4.0 Detailed Metrics</h2>
+<h2>5.0 Detailed Metrics</h2>
 
-<h3>4.1 Work Breakdown</h3>
+<h3>5.1 Epic-Level Work Breakdown</h3>
 <table>
     <tr>
         <th>Category</th>
@@ -232,17 +278,32 @@
         <th>Percentage</th>
     </tr>
     <tr>
-        <td>Completed Issues</td>
+        <td>Total Issues Reviewed</td>
+        <td>{{totalIssues}}</td>
+        <td>100%</td>
+    </tr>
+    <tr>
+        <td>Epic-Level Issues</td>
+        <td>{{epicIssues}}</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td>Sub-Epic Development Items</td>
+        <td>{{subEpicIssues}}</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td>Completed Epics</td>
         <td>{{completedIssues.length}}</td>
         <td>{{workBreakdown.completedPercentage}}%</td>
     </tr>
     <tr>
-        <td>In Progress</td>
+        <td>Epics In Progress</td>
         <td>{{inProgressIssues.length}}</td>
         <td>{{workBreakdown.inProgressPercentage}}%</td>
     </tr>
     <tr>
-        <td>Needs Attention</td>
+        <td>Epics Needing Attention</td>
         <td>{{issuesNeedingAttention.length}}</td>
         <td>{{workBreakdown.attentionPercentage}}%</td>
     </tr>
