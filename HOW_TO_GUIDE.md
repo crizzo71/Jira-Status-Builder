@@ -6,12 +6,13 @@
 3. [Selecting Projects and Boards](#selecting-projects-and-boards)
 4. [Advanced Board Selection (NEW)](#advanced-board-selection-new)
 5. [Generating Reports](#generating-reports)
-6. [Enhanced Report Features (NEW)](#enhanced-report-features-new)
-7. [Shareable Formats (NEW)](#shareable-formats-new)
-8. [Adding Manual Input](#adding-manual-input)
-9. [Understanding Reports](#understanding-reports)
-10. [Troubleshooting](#troubleshooting)
-11. [Advanced Usage](#advanced-usage)
+6. [Epic-Focused Reporting (NEW)](#epic-focused-reporting-new)
+7. [Enhanced Report Features (NEW)](#enhanced-report-features-new)
+8. [Shareable Formats (NEW)](#shareable-formats-new)
+9. [Adding Manual Input](#adding-manual-input)
+10. [Understanding Reports](#understanding-reports)
+11. [Troubleshooting](#troubleshooting)
+12. [Advanced Usage](#advanced-usage)
 
 ---
 
@@ -272,6 +273,102 @@ Your executive report includes:
 
 ---
 
+## Epic-Focused Reporting (NEW)
+
+The reporting system now focuses on **Epic-level strategic work** for executive visibility while providing comprehensive **development activity trends** for operational insights.
+
+### How Epic-Level Filtering Works
+
+The report automatically categorizes all Jira issues into two groups:
+
+**Epic-Level Items (Strategic Focus):**
+- **Epic** - Major strategic initiatives
+- **Initiative** - Cross-team strategic work  
+- **Theme** - High-level organizational priorities
+
+**Sub-Epic Items (Development Trends):**
+- **Story** - User-facing features
+- **Task** - Implementation work
+- **Bug** - Defect resolution
+- **Sub-task** - Breakdown of larger work items
+
+### Report Structure
+
+#### 1.0-3.0: Epic-Level Strategic Content
+- **Team Performance Metrics** - Based on Epic completion
+- **Key Epic-Level Accomplishments** - Only completed Epics/Initiatives
+- **Upcoming Epic-Level Priorities** - Strategic work in progress
+
+#### 4.0: Development Activity Trends (NEW)
+- **Sub-Epic Work Item Analysis** - Comprehensive development metrics
+- **Activity Breakdown** - Performance by issue type
+- **Current Activity** - Development team status
+- **Weekly Throughput** - Operational velocity trends
+
+#### 5.0: Detailed Metrics
+- **Epic vs Sub-Epic breakdown** - Strategic vs operational split
+- **Attention Items** - Only Epic-level issues requiring focus
+
+### Example Epic-Focused Output
+
+**Strategic Section (Epics Only):**
+```markdown
+### 1.2 Key Epic-Level Accomplishments
+
+**Completed Epics and Major Initiatives:**
+- OCM-17467 - ROSA CLI Support for AutoNode Private Preview
+  - Epic: 25% complete (2/8 issues)
+- OCM-16478 - Multi-cluster Security Framework Initiative  
+  - Epic: 75% complete (6/8 issues)
+```
+
+**Development Trends Section (Sub-Epic Items):**
+```markdown
+### 4.1 Sub-Epic Work Item Analysis
+
+**Summary:** 150 stories, tasks, and sub-tasks completed or in progress
+**Completion Rate:** 68% of development items completed this period
+
+**Activity Breakdown:**
+- Task: 70 items (74% complete)
+- Story: 36 items (56% complete)  
+- Bug: 30 items (60% complete)
+
+**Current Activity:**
+- Active Items: 21 stories/tasks in progress
+- New This Week: 5 new development items
+- Needs Attention: 42 items requiring review
+```
+
+### Benefits of Epic-Focused Reporting
+
+**For Executives:**
+- **Clear Strategic View** - Only see high-level initiatives and themes
+- **Reduced Noise** - No tactical development tasks cluttering the report
+- **Strategic Progress** - Epic completion percentages and major milestones
+- **Forward-Looking** - Focus on major initiatives rather than individual tasks
+
+**For Development Teams:**
+- **Comprehensive Metrics** - Full visibility into development productivity
+- **Trend Analysis** - Track completion rates by issue type
+- **Operational Insights** - Weekly throughput and activity patterns
+- **Attention Management** - Clear view of items requiring focus
+
+### Issue Type Examples
+
+**Epic-Level (Main Report):**
+- ✅ `Epic: Implement Multi-Cluster Authentication Framework`
+- ✅ `Initiative: Modernize CI/CD Pipeline Architecture`
+- ✅ `Theme: Security Compliance and Governance`
+
+**Sub-Epic Level (Trends Section):**
+- 📊 `Story: Add user login validation`
+- 📊 `Task: Update authentication middleware`
+- 📊 `Bug: Fix memory leak in API handler`
+- 📊 `Sub-task: Implement JWT token refresh`
+
+---
+
 ## Enhanced Report Features (NEW)
 
 ### Pretty Links & Navigation
@@ -479,40 +576,68 @@ Recent Performance:
 
 ### Issue Categorization
 
-**Completed Issues:**
+#### Epic-Level Issues (Main Report Sections)
+
+**Completed Epics:**
+- Type: Epic, Initiative, Theme
 - Status: Done, Resolved, Closed
 - Time frame: Last 7 days
-- Sorted by resolution date
+- **Strategic focus** with completion metrics
 - **Includes clickable links** to Red Hat Jira
-- **Shows Epic progress** and parent relationships
 
-**In Progress Issues:**
+**Epics In Progress:**
+- Type: Epic, Initiative, Theme  
 - Status: In Progress, In Review, Testing, Code Review
 - Sorted by priority and update date
 - **Epic progress tracking** with visual indicators
-- **Parent-child relationships** clearly displayed
+- **Strategic initiative context**
 
-**Issues Requiring Attention:**
-- No updates in 3+ days
-- Not resolved
-- Potential blockers
-- **Epic context** to understand impact
-- **Direct navigation links** for quick action
+**Epics Requiring Attention:**
+- Epic-level items with no updates in 3+ days
+- Not resolved strategic initiatives
+- Potential blockers to major initiatives
+- **Executive-level attention items only**
+
+#### Sub-Epic Development Trends (Section 4.0)
+
+**Development Activity Analysis:**
+- Types: Story, Task, Bug, Sub-task
+- **Completion rate tracking** by issue type  
+- **Weekly throughput metrics** for operational velocity
+- **Current activity status** (active, new, attention needed)
+- **Trend analysis** showing development team productivity
+
+**Activity Breakdown Example:**
+- Task: 70 items (74% complete)
+- Story: 36 items (56% complete)
+- Bug: 30 items (60% complete)
 
 ### Report Quality Indicators
 
-**Good Report:**
-- ✅ 10+ issues found
-- ✅ Velocity data available
-- ✅ Manual input completed
-- ✅ Recent activity
-- ✅ Epic progress data populated
-- ✅ Team name correctly displayed
+**Excellent Epic-Focused Report:**
+- ✅ Epic-level strategic items present
+- ✅ Sub-Epic development trends showing healthy activity
+- ✅ Velocity data available for both Epic and sub-Epic levels
+- ✅ Manual input completed for strategic context
+- ✅ Epic progress data populated with completion percentages
+- ✅ Development activity breakdown by issue type
+- ✅ Team name correctly displayed from board selection
 
-**Needs Attention:**
-- ⚠️ Very few issues found
-- ⚠️ No completed work
-- ⚠️ Many stale issues
+**Good Operational Report:**
+- ✅ 10+ sub-Epic development items found
+- ✅ Development trends showing completion rates
+- ✅ Weekly throughput data available
+- ✅ Clear activity breakdown (Tasks, Stories, Bugs)
+
+**Needs Strategic Attention:**
+- ⚠️ No Epic-level work in progress or completed
+- ⚠️ All activity is tactical/operational only
+- ⚠️ Missing strategic initiatives and themes
+
+**Needs Operational Attention:**
+- ⚠️ Very few development items found
+- ⚠️ Low completion rates across issue types
+- ⚠️ Many stale sub-Epic items requiring attention
 
 ---
 
@@ -575,6 +700,49 @@ npm run select  # Browse available projects
 ---
 
 ## Advanced Usage
+
+### Working with Epic-Focused Reports
+
+**Optimizing for Strategic Visibility:**
+```bash
+# Focus on boards with Epic-level work
+npm run select
+# Choose boards that contain Epics, Initiatives, and Themes
+# Examples: "Product Planning Board", "Strategic Initiatives Board"
+```
+
+**Understanding Report Output:**
+```bash
+# If main sections show "No Epic-level work"
+# This is normal for development-focused boards
+# Check section 4.0 "Development Activity Trends" for comprehensive metrics
+
+# Example board types:
+# - Planning boards: Usually contain Epics and Initiatives  
+# - Development boards: Usually contain Stories, Tasks, Bugs
+# - Mixed boards: Contain both Epic and sub-Epic items
+```
+
+**Best Practices:**
+- **Executive Reports**: Use boards with strategic Epics and Initiatives
+- **Team Reports**: Use development boards and focus on section 4.0 trends
+- **Comprehensive Reports**: Use multiple boards covering both strategic and operational work
+- **Board Selection**: Choose board IDs manually for precise Epic/sub-Epic targeting
+
+**Strategic vs Operational Board Examples:**
+```bash
+# Strategic focus (Epic-heavy boards):
+npm run select
+# Enter board IDs: 20600,20782  # Planning and initiative boards
+
+# Operational focus (sub-Epic heavy boards):  
+npm run select
+# Enter board IDs: 17975,17291  # Development and engineering boards
+
+# Balanced view (mixed boards):
+npm run select  
+# Enter board IDs: 20600,17975,17291,20782  # All board types
+```
 
 ### Multiple Projects
 
