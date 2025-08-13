@@ -2,17 +2,20 @@
 
 ## Table of Contents
 1. [Quick Start](#quick-start)
-2. [First Time Setup](#first-time-setup)
-3. [Selecting Projects and Boards](#selecting-projects-and-boards)
-4. [Advanced Board Selection (NEW)](#advanced-board-selection-new)
-5. [Generating Reports](#generating-reports)
-6. [Epic-Focused Reporting (NEW)](#epic-focused-reporting-new)
-7. [Enhanced Report Features (NEW)](#enhanced-report-features-new)
-8. [Shareable Formats (NEW)](#shareable-formats-new)
-9. [Adding Manual Input](#adding-manual-input)
-10. [Understanding Reports](#understanding-reports)
-11. [Troubleshooting](#troubleshooting)
-12. [Advanced Usage](#advanced-usage)
+2. [Minimal Report Generator (NEW)](#minimal-report-generator-new)
+3. [First Time Setup](#first-time-setup)
+4. [Enhanced CLI Features (NEW)](#enhanced-cli-features-new)
+5. [Selecting Projects and Boards](#selecting-projects-and-boards)
+6. [Advanced Board Selection](#advanced-board-selection)
+7. [Generating Reports](#generating-reports)
+8. [Security Vulnerability Tracking (NEW)](#security-vulnerability-tracking-new)
+9. [Epic-Focused Reporting](#epic-focused-reporting)
+10. [Enhanced Report Features](#enhanced-report-features)
+11. [Shareable Formats](#shareable-formats-new)
+12. [Adding Manual Input](#adding-manual-input)
+13. [Understanding Reports](#understanding-reports)
+14. [Troubleshooting](#troubleshooting)
+15. [Advanced Usage](#advanced-usage)
 
 ---
 
@@ -22,11 +25,109 @@ If you've already set up the app, here's the fastest way to generate a report:
 
 ```bash
 # Navigate to the project directory
-cd /Users/christinerizzo/Claude/Jira_summary
+cd /path/to/Jira-Status-Builder
 
 # Generate a report with current settings
 npm start
 ```
+
+---
+
+## Minimal Report Generator (NEW)
+
+**🚀 Get started immediately without npm dependencies!**
+
+The minimal report generator works without any npm install requirements and provides instant executive reports. Perfect for first-time setup or when you have npm permission issues.
+
+### Step 1: Basic Setup
+
+```bash
+# Copy environment template
+cp .env.example .env
+
+# Edit .env with your Red Hat Jira token
+nano .env
+```
+
+Add your API token to `.env`:
+```bash
+JIRA_API_TOKEN=your_red_hat_jira_token_here
+JIRA_PROJECT_KEYS=OCM
+```
+
+### Step 2: Test Your Connection
+
+```bash
+# Verify API connectivity
+node setup-test.js
+```
+
+You should see:
+```
+✅ API connection successful
+👤 Authenticated as: Your Name (your.email@redhat.com)
+🎯 Ready to generate reports!
+```
+
+### Step 3: Generate Your First Report
+
+```bash
+# Generate immediate weekly report
+node minimal-report.js
+```
+
+**What you get:**
+- **📄 Markdown Report**: `reports/markdown/executive-report-OCM-2025-08-13.md`
+- **📊 JSON Data**: `data/jira-export-OCM-2025-08-13.json`
+- **📈 CSV Export**: `data/jira-export-OCM-2025-08-13.csv`
+
+### Example Output
+
+```
+🚀 Jira Status Builder - Minimal Report Generator
+================================================
+
+📋 Fetching issues from OCM project...
+📅 Date range: Aug 5, 2025 to Aug 12, 2025
+✅ Found 100 issues
+
+📊 Issue Categories:
+   Completed: 17
+   In Progress: 25
+   To Do: 38
+
+⚡ Team Velocity: 17 items per 1 week (High)
+
+🎉 Report Generation Complete!
+```
+
+### Minimal Report Features
+
+✅ **Zero Dependencies** - Works without npm install  
+✅ **Instant Setup** - Just API token required  
+✅ **Executive Format** - Professional weekly reports  
+✅ **Team Velocity** - Automatic throughput calculation  
+✅ **Issue Categorization** - Completed, in-progress, backlog  
+✅ **Multiple Exports** - Markdown, JSON, CSV formats  
+✅ **Issue Type Breakdown** - Stories, bugs, tasks analysis  
+✅ **Team Distribution** - Assignee workload overview  
+✅ **Clickable Links** - Direct links to Red Hat Jira issues  
+
+### When to Use Minimal vs Full Version
+
+**Use Minimal Reporter When:**
+- First time setup or testing
+- npm permission issues
+- Quick one-off reports
+- CI/CD automation scripts
+- Lightweight environments
+
+**Use Full Version When:**
+- Need manual input collection
+- Want HTML/Google Docs formats
+- Multiple board selection required
+- Enhanced CLI features needed
+- Team collaboration workflows
 
 ---
 
@@ -71,6 +172,165 @@ npm start
 ```
 
 If successful, you'll see a report generated for the OCM project.
+
+---
+
+## Enhanced CLI Features (NEW)
+
+**🔧 Advanced Jira operations with jira-cli patterns**
+
+The enhanced CLI provides powerful Jira management capabilities beyond basic reporting, integrating patterns from [claude-workflow jira-cli usage](https://github.com/ciaranRoche/claude-workflow/blob/main/.claude/context/jira-cli-usage.md).
+
+### Quick Enhanced CLI Commands
+
+```bash
+# Show all enhanced commands
+npm run enhanced help
+
+# Generate reports with enhanced features
+npm run enhanced report --format=all
+
+# Security vulnerability tracking
+npm run enhanced:security cve CVE-2023-1234 OCM
+
+# Bulk issue management
+npm run enhanced:assign "OCM-1,OCM-2" "john.doe"
+
+# Multi-format export
+npm run enhanced:export "project=OCM AND updated >= -7d" json,csv,plain
+```
+
+### Security Operations
+
+#### CVE and Vulnerability Tracking
+```bash
+# Track specific CVE across projects
+npm run enhanced:security cve CVE-2023-1234 OCM
+
+# Track software vulnerabilities
+npm run enhanced:security software "Apache" OCM
+
+# List all security issues
+npm run enhanced:security all OCM --raw
+```
+
+#### Security Team Workflow Example
+```bash
+# 1. Track CVE and export raw data
+./enhanced-cli.js security cve CVE-2023-1234 OCM --raw > cve-report.json
+
+# 2. Assign security issues to security team
+./enhanced-cli.js query "project=OCM AND labels='SecurityTracking'" --plain | 
+  cut -f1 | xargs -I{} ./enhanced-cli.js assign {} "security-team"
+
+# 3. Add tracking comments
+./enhanced-cli.js comment "OCM-SEC-1,OCM-SEC-2" "## Security Review\\n- CVE analyzed\\n- Patch available"
+```
+
+### Bulk Issue Management
+
+#### Assignment Operations
+```bash
+# Assign multiple issues to user
+npm run enhanced:assign "OCM-1,OCM-2,OCM-3" "john.doe"
+
+# Unassign issues (jira-cli pattern: 'x' = unassign)
+npm run enhanced:assign "OCM-1,OCM-2" x
+```
+
+#### Label and Component Management
+```bash
+# Add labels to issues
+./enhanced-cli.js label "OCM-1,OCM-2" add "priority,security"
+
+# Remove labels from issues
+./enhanced-cli.js label "OCM-1,OCM-2" remove "old-label"
+```
+
+#### Comment Management
+```bash
+# Add markdown comment to multiple issues
+./enhanced-cli.js comment "OCM-1,OCM-2" "## Update\\n- Progress made\\n- Next steps defined"
+
+# Plain text comment
+./enhanced-cli.js comment "OCM-1" "Simple status update" --plain
+```
+
+### Advanced Operations
+
+#### Issue Linking
+```bash
+# Create relationships between issues
+./enhanced-cli.js link OCM-1 "blocks" OCM-2
+./enhanced-cli.js link OCM-100 "epic" OCM-1
+
+# Available link types:
+# blocks, is blocked by, clones, is cloned by, duplicates, is duplicated by,
+# relates to, causes, is caused by, child-issue, parent-issue, epic
+```
+
+#### Workflow Transitions
+```bash
+# Move issues through workflow states
+./enhanced-cli.js transition "OCM-1,OCM-2" "Done"
+
+# Transition with resolution
+./enhanced-cli.js transition "OCM-1" "Done" "Fixed"
+
+# Available resolutions:
+# Done, Fixed, Won't Fix, Duplicate, Incomplete, Cannot Reproduce,
+# Won't Do, Rejected, Not a Bug, Obsolete
+```
+
+### Export and Query Operations
+
+#### Multi-Format Export
+```bash
+# Export in multiple formats
+npm run enhanced:export "project=OCM AND updated >= -7d" json,csv,plain
+
+# Raw JSON export (equivalent to jira-cli --raw)
+./enhanced-cli.js export "status='To Do'" raw
+
+# Plain text export (equivalent to jira-cli --plain)
+./enhanced-cli.js export "assignee=john.doe" plain
+```
+
+#### Custom JQL Queries
+```bash
+# Standard JSON output
+npm run enhanced:query "project=OCM AND updated >= -7d"
+
+# Raw JSON output (jira-cli --raw equivalent)
+./enhanced-cli.js query "project=OCM" --raw
+
+# Plain text output (jira-cli --plain equivalent)
+./enhanced-cli.js query "project=OCM" --plain
+
+# No interactive prompts (jira-cli --no-input equivalent)
+./enhanced-cli.js query "project=OCM" --no-input
+```
+
+### CLI Flags and Options
+
+The enhanced CLI supports jira-cli equivalent flags:
+
+| Flag | Purpose | jira-cli Equivalent |
+|------|---------|-------------------|
+| `--raw` | Output raw JSON | `jira issue list --raw` |
+| `--plain` | Output plain text | `jira issue list --plain` |
+| `--no-input` | Disable interactive prompts | `jira issue edit --no-input` |
+| `--format=<type>` | Multiple output formats | Combined functionality |
+
+### Enhanced CLI Benefits
+
+✅ **Security Focus** - CVE tracking and vulnerability management  
+✅ **Bulk Operations** - Efficient multi-issue management  
+✅ **Automation Ready** - Non-interactive modes for scripts  
+✅ **jira-cli Compatible** - Familiar patterns and flags  
+✅ **Multi-Format Export** - JSON, CSV, plain text, raw formats  
+✅ **Issue Relationships** - Complete linking and workflow management  
+✅ **Rate Limited** - Built-in API throttling for stability  
 
 ---
 
@@ -369,6 +629,177 @@ The report automatically categorizes all Jira issues into two groups:
 
 ---
 
+## Security Vulnerability Tracking (NEW)
+
+**🔒 Specialized security operations for vulnerability management**
+
+The enhanced CLI provides dedicated commands for tracking CVEs, security vulnerabilities, and security-related work across Red Hat Jira projects.
+
+### CVE Tracking
+
+Track specific Common Vulnerabilities and Exposures (CVEs) across projects:
+
+```bash
+# Track specific CVE
+npm run enhanced:security cve CVE-2023-1234 OCM
+
+# Export CVE tracking data
+./enhanced-cli.js security cve CVE-2023-1234 OCM --raw > cve-tracking.json
+```
+
+**JQL Pattern Used:**
+```sql
+project=OCM AND (issuetype="Vulnerability" OR (issuetype="Bug" and labels="SecurityTracking")) 
+AND (summary~"CVE-2023-1234" OR summary~"2023-1234")
+```
+
+### Software Vulnerability Tracking
+
+Track vulnerabilities for specific software components:
+
+```bash
+# Track Apache vulnerabilities
+npm run enhanced:security software "Apache" OCM
+
+# Track Kubernetes security issues
+npm run enhanced:security software "Kubernetes" OCM --plain
+```
+
+**JQL Pattern Used:**
+```sql
+project=OCM AND (issuetype="Vulnerability" OR (issuetype="Bug" and labels="SecurityTracking")) 
+AND summary~"Apache"
+```
+
+### General Security Issue Tracking
+
+List all security-related issues in a project:
+
+```bash
+# List all security issues
+npm run enhanced:security all OCM
+
+# Export all security issues as CSV
+./enhanced-cli.js security all OCM --format=csv
+```
+
+### Security Team Workflows
+
+#### Daily Security Monitoring
+```bash
+#!/bin/bash
+# daily-security-check.sh
+
+PROJECT="OCM"
+DATE=$(date +%Y-%m-%d)
+
+echo "🔒 Daily Security Check for $PROJECT - $DATE"
+echo "============================================="
+
+# Check for new security issues
+./enhanced-cli.js security all $PROJECT --format=json > security-report-$DATE.json
+
+# Count critical issues
+CRITICAL_COUNT=$(./enhanced-cli.js query "project=$PROJECT AND priority=Critical AND labels='SecurityTracking'" --raw | jq '.total')
+
+echo "📊 Critical Security Issues: $CRITICAL_COUNT"
+
+# Alert if critical issues found
+if [ "$CRITICAL_COUNT" -gt "0" ]; then
+  echo "⚠️  ALERT: $CRITICAL_COUNT critical security issues require attention"
+  ./enhanced-cli.js query "project=$PROJECT AND priority=Critical AND labels='SecurityTracking'" --plain
+fi
+```
+
+#### CVE Response Workflow
+```bash
+# 1. Create tracking issue for CVE
+CVE_ID="CVE-2023-1234"
+./enhanced-cli.js security cve $CVE_ID OCM
+
+# 2. Assign to security team
+SECURITY_ISSUES=$(./enhanced-cli.js security cve $CVE_ID OCM --plain | cut -f1 | grep OCM)
+for issue in $SECURITY_ISSUES; do
+  ./enhanced-cli.js assign $issue "security-team"
+done
+
+# 3. Add analysis comment
+./enhanced-cli.js comment "$SECURITY_ISSUES" "## CVE Analysis Started\\n- Severity: TBD\\n- Impact: Under review\\n- Timeline: 48h assessment"
+
+# 4. Link related issues
+./enhanced-cli.js link OCM-SEC-1 "relates to" OCM-PATCH-1
+```
+
+#### Security Metrics and Reporting
+```bash
+# Weekly security metrics
+./enhanced-cli.js export "project=OCM AND labels='SecurityTracking' AND resolved >= -7d" json,csv
+
+# Security issue aging report
+./enhanced-cli.js query "project=OCM AND labels='SecurityTracking' AND status != Done ORDER BY created ASC" --plain
+
+# Critical security backlog
+./enhanced-cli.js query "project=OCM AND priority=Critical AND labels='SecurityTracking' AND status = 'To Do'" --format=csv
+```
+
+### Security Labels and Categories
+
+The security tracking uses these Jira patterns:
+
+**Issue Types:**
+- `Vulnerability` - Dedicated vulnerability issues
+- `Bug` with `SecurityTracking` label - Security-related bugs
+
+**Priority Levels:**
+- `Critical` - Immediate attention required
+- `High` - Address within sprint
+- `Medium` - Address within release cycle
+- `Low` - Address when convenient
+
+**Common Labels:**
+- `SecurityTracking` - General security work
+- `CVE-2023-XXXX` - Specific CVE tracking
+- `SecurityReview` - Requires security team review
+- `PatchRequired` - Needs security patch
+
+### Security Query Examples
+
+#### Find Unpatched CVEs
+```bash
+./enhanced-cli.js query "project=OCM AND summary~'CVE-' AND status != Done AND labels='SecurityTracking'" --plain
+```
+
+#### High Priority Security Backlog
+```bash
+./enhanced-cli.js query "project=OCM AND priority in (Critical, High) AND labels='SecurityTracking' AND status = 'To Do'" --format=json
+```
+
+#### Security Work This Sprint
+```bash
+./enhanced-cli.js query "project=OCM AND labels='SecurityTracking' AND updated >= -14d" --format=csv
+```
+
+### Integration with Security Tools
+
+The security tracking integrates with common security workflows:
+
+**Vulnerability Scanners:**
+- Export issue data for vulnerability management tools
+- Track remediation status in Jira
+- Link scanner findings to Jira issues
+
+**Security Dashboards:**
+- JSON/CSV export for dashboard integration
+- Real-time status via API queries
+- Automated metrics collection
+
+**Compliance Reporting:**
+- Detailed audit trails via issue history
+- Status reporting for compliance frameworks
+- Evidence collection for security assessments
+
+---
+
 ## Enhanced Report Features (NEW)
 
 ### Pretty Links & Navigation
@@ -643,53 +1074,233 @@ Recent Performance:
 
 ## Troubleshooting
 
+### Quick Setup Issues
+
+**🚀 Use Minimal Report Generator First**
+
+If you're having any setup issues, start with the minimal report generator:
+
+```bash
+# 1. Basic setup test
+node setup-test.js
+
+# 2. Generate report without dependencies
+node minimal-report.js
+```
+
+This bypasses npm dependency issues and validates your basic setup.
+
 ### Common Issues
 
 **"Missing required environment variables"**
 ```bash
 # Check your .env file exists and has JIRA_API_TOKEN
 cat .env
+
+# Verify API token is set (not the default value)
+grep JIRA_API_TOKEN .env
 ```
 
-**"403 Forbidden" errors**
+**"npm permission errors" or "EACCES"**
 ```bash
-# Your token may be expired, generate a new one
-# Update JIRA_API_TOKEN in .env file
+# Use minimal report generator instead
+node minimal-report.js
+
+# Or fix npm permissions
+sudo chown -R $(whoami) ~/.npm
+npm install
+```
+
+**"403 Forbidden" or "401 Unauthorized" errors**
+```bash
+# Test your API connection
+node setup-test.js
+
+# Your token may be expired, generate a new one at:
+# https://issues.redhat.com/secure/ViewProfile.jspa?selectedTab=com.atlassian.pats.pats-plugin:jira-user-personal-access-tokens
 ```
 
 **"No issues found"**
-- Check project key is correct
+- Check project key is correct (default: OCM)
 - Verify you have access to the project
-- Try a different time period
+- Try a different time period in .env: `REPORT_WEEKS_BACK=2`
+- Test with minimal reporter: `node minimal-report.js`
 
-**"Command not found"**
+**"Command not found" or "Module not found"**
 ```bash
 # Make sure you're in the right directory
-cd /Users/christinerizzo/Claude/Jira_summary
+cd /path/to/Jira-Status-Builder
 
-# Check if dependencies are installed
+# For minimal reporter (no dependencies needed)
+node minimal-report.js
+
+# For full features, install dependencies
 npm install
+```
+
+### Enhanced CLI Issues
+
+**"Enhanced CLI commands not working"**
+```bash
+# Check if enhanced CLI is executable
+chmod +x enhanced-cli.js
+
+# Test enhanced CLI
+./enhanced-cli.js help
+
+# Use npm scripts instead
+npm run enhanced help
+```
+
+**"Security tracking returns no results"**
+```bash
+# Verify security labels exist in your project
+./enhanced-cli.js query "project=OCM AND labels='SecurityTracking'" --plain
+
+# Try broader security query
+./enhanced-cli.js query "project=OCM AND issuetype='Vulnerability'" --plain
+```
+
+**"Bulk operations failing"**
+```bash
+# Test with single issue first
+./enhanced-cli.js assign OCM-1 "john.doe"
+
+# Check issue keys are valid
+./enhanced-cli.js query "key in (OCM-1,OCM-2)" --plain
 ```
 
 ### Debug Mode
 
-Check what's happening:
+**Basic Diagnostics:**
 ```bash
+# Test API connectivity
+node setup-test.js
+
 # View current configuration
 cat .env
 
-# Check saved project selection
-cat project-selection.json
+# Check for saved selections
+ls -la project-selection.json manual-input.json
 
-# View generated reports
-ls -la reports/
+# View generated files
+ls -la reports/ data/
+```
+
+**Enhanced CLI Diagnostics:**
+```bash
+# Test enhanced CLI connection
+./enhanced-cli.js init
+
+# Debug specific commands
+DEBUG=1 ./enhanced-cli.js security all OCM
+DEBUG=1 ./enhanced-cli.js query "project=OCM" --raw
+```
+
+**Network and Permissions:**
+```bash
+# Test direct API access
+curl -H "Authorization: Bearer $JIRA_API_TOKEN" "https://issues.redhat.com/rest/api/2/myself"
+
+# Check project access
+curl -H "Authorization: Bearer $JIRA_API_TOKEN" "https://issues.redhat.com/rest/api/2/project/OCM"
+
+# Verify API token from .env
+source .env && echo "Token: ${JIRA_API_TOKEN:0:10}..."
 ```
 
 ### Getting Help
 
-**Test API Access:**
+**Environment Validation:**
 ```bash
+# Complete setup test
+node setup-test.js
+
+# Manual API test
 curl -H "Authorization: Bearer YOUR_TOKEN" "https://issues.redhat.com/rest/api/2/myself"
+```
+
+**File Structure Check:**
+```bash
+# Verify all required files exist
+ls -la *.js .env* templates/ package.json
+
+# Check file permissions
+ls -la enhanced-cli.js minimal-report.js setup-test.js
+```
+
+**Reset to Clean State:**
+```bash
+# Clean generated files
+rm -rf reports/ data/ project-selection.json manual-input.json
+
+# Reset environment (keep your token!)
+cp .env.example .env.backup
+# Edit .env with your token again
+
+# Test minimal setup
+node setup-test.js
+node minimal-report.js
+```
+
+### Performance Issues
+
+**Large Projects or Slow Queries:**
+```bash
+# Use smaller time windows
+# Edit .env: REPORT_WEEKS_BACK=1
+
+# Use specific boards instead of project-wide
+npm run select
+# Choose specific board IDs
+
+# Export in chunks for analysis
+./enhanced-cli.js export "project=OCM AND updated >= -7d" json
+./enhanced-cli.js export "project=OCM AND updated >= -14d AND updated < -7d" json
+```
+
+**Rate Limiting:**
+```bash
+# The tools include built-in rate limiting (250ms delays)
+# If you hit rate limits, increase delay in jira-enhanced-client.js
+# Change: this.requestDelay = 250; to this.requestDelay = 500;
+```
+
+### Common Workflows
+
+**First Time Setup Validation:**
+```bash
+# 1. Basic setup
+cp .env.example .env
+# Edit .env with your token
+
+# 2. Test connection
+node setup-test.js
+
+# 3. Generate first report
+node minimal-report.js
+
+# 4. Install full features (optional)
+npm install
+npm run select
+npm start
+```
+
+**Troubleshooting Workflow:**
+```bash
+# 1. Diagnose issue
+node setup-test.js
+
+# 2. Try minimal approach
+node minimal-report.js
+
+# 3. Check specific component
+./enhanced-cli.js init
+./enhanced-cli.js query "project=OCM LIMIT 1" --plain
+
+# 4. Reset if needed
+rm -rf reports/ data/
+node minimal-report.js
 ```
 
 **Check Project Access:**
