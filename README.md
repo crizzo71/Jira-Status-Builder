@@ -41,6 +41,25 @@ npm start
 ✅ **Multi-Board Selection**: Generate reports from multiple boards in one go  
 ✅ **Shareable Documents**: Google Docs compatible HTML and plain text formats  
 
+## 🆕 Enhanced CLI (NEW)
+
+**Advanced Jira operations with jira-cli patterns:**
+- 🔒 **Security vulnerability tracking** with CVE and software-specific queries
+- 👥 **Bulk issue management** (assign, comment, label, transition)
+- 🔗 **Issue linking** with 12 relationship types
+- 📤 **Multi-format export** (JSON, CSV, plain text, raw)
+- ⚡ **Custom JQL execution** with output formatting options
+
+```bash
+# Quick start with enhanced features
+npm run enhanced help
+npm run enhanced:security cve CVE-2023-1234 OCM
+npm run enhanced:assign "OCM-1,OCM-2" "john.doe"
+npm run enhanced:export "project=OCM" json,csv,plain
+```
+
+**📚 See [ENHANCED-CLI-GUIDE.md](ENHANCED-CLI-GUIDE.md) for complete documentation**
+
 ## 🔧 Setup
 
 ### 1. Get Your Red Hat Jira Token

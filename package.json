@@ -23,6 +23,11 @@
     "init": "node index.js init",
     "input": "node index.js input",
     "dev": "node index.js report",
+    "enhanced": "node enhanced-cli.js",
+    "enhanced:security": "node enhanced-cli.js security",
+    "enhanced:assign": "node enhanced-cli.js assign",
+    "enhanced:export": "node enhanced-cli.js export",
+    "enhanced:query": "node enhanced-cli.js query",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
