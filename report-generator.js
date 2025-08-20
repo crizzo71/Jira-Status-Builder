@@ -36,6 +36,25 @@ import path from 'path';
 export class ReportGenerator {
   constructor() {
     this.templateCache = new Map();
+    this.registerHandlebarsHelpers();
+  }
+
+  registerHandlebarsHelpers() {
+    // Helper for repeating characters (for progress bars)
+    Handlebars.registerHelper('repeat', function(times, char) {
+      if (typeof times !== 'number' || times < 0) return '';
+      return new Array(Math.floor(times / 10) + 1).join(char || '=');
+    });
+
+    // Helper for subtraction
+    Handlebars.registerHelper('subtract', function(a, b) {
+      return a - b;
+    });
+
+    // Helper to check if there are items
+    Handlebars.registerHelper('hasItems', function(array) {
+      return array && array.length > 0;
+    });
   }
 
   async loadTemplate(templateName) {
@@ -328,6 +347,183 @@ export class ReportGenerator {
     return template(data);
   }
 
+  groupIssuesByEpic(issues) {
+    const epicGroups = new Map();
+    const unassociatedIssues = [];
+    const processedIssues = new Set(); // Track processed issues to avoid duplicates
+
+    issues.forEach(issue => {
+      // Skip if we've already processed this issue
+      if (processedIssues.has(issue.key)) {
+        return;
+      }
+      processedIssues.add(issue.key);
+
+      if (issue.epic && issue.epic.key) {
+        const epicKey = issue.epic.key;
+        
+        if (!epicGroups.has(epicKey)) {
+          epicGroups.set(epicKey, {
+            epic: {
+              key: issue.epic.key,
+              summary: issue.epic.summary,
+              url: issue.epic.url,
+              status: 'Unknown', // Will be updated if Epic issue is found
+              priority: 'Unknown',
+              assignee: null,
+              progress: issue.epic.progress || null
+            },
+            relatedIssues: []
+          });
+        }
+        
+        // If this issue IS the Epic, update the Epic info
+        if (issue.key === epicKey) {
+          const epicGroup = epicGroups.get(epicKey);
+          epicGroup.epic.status = issue.status;
+          epicGroup.epic.priority = issue.priority;
+          epicGroup.epic.assignee = issue.assignee;
+        } else {
+          // Otherwise add as related issue (check for duplicates)
+          const epicGroup = epicGroups.get(epicKey);
+          const existingIssue = epicGroup.relatedIssues.find(existing => existing.key === issue.key);
+          if (!existingIssue) {
+            epicGroup.relatedIssues.push(issue);
+          }
+        }
+      } else {
+        unassociatedIssues.push(issue);
+      }
+    });
+
+    return {
+      epicsWithIssues: Array.from(epicGroups.values()),
+      unassociatedIssues
+    };
+  }
+
+  async generateEpicFocusedReport(issues, velocityData, manualInput, project = null, boards = [], jiraClient = null) {
+    const template = await this.loadTemplate('epic-focused');
+    const categorized = this.categorizeJiraCliIssues(issues);
+    const velocity = this.calculateVelocityMetrics(velocityData);
+    const epicGrouping = this.groupIssuesByEpic(issues);
+    
+    const startDate = moment().subtract(1, 'weeks').format('MMM DD');
+    const endDate = moment().format('MMM DD, YYYY');
+    
+    const projectInfo = project ? `${project.key} - ${project.name}` : 'Multi-Cluster Management Engineering';
+    
+    // Generate team name from boards
+    let teamName = 'Multi-Cluster Management Engineering';
+    if (boards && boards.length > 0) {
+      if (boards.length === 1) {
+        teamName = boards[0].name;
+      } else {
+        teamName = `${projectInfo} (${boards.length} teams)`;
+      }
+    } else if (project) {
+      teamName = projectInfo;
+    }
+    
+    // Generate trend analysis for sub-Epic items
+    const subEpicTrends = this.generateSubEpicTrendAnalysis(categorized.subEpicItems, velocityData);
+    
+    // Get component name from the jiraClient if in issues mode
+    let componentName = null;
+    if (jiraClient && jiraClient.dataSourceMode === 'issues' && jiraClient.issuesFilter && jiraClient.issuesFilter.component) {
+      componentName = jiraClient.issuesFilter.component;
+    }
+    
+    // Collect Epic hierarchy information
+    const hierarchyMap = await this.buildEpicHierarchyMap(epicGrouping.epicsWithIssues, jiraClient);
+    
+    const data = {
+      dateRange: `${startDate} - ${endDate}`,
+      totalIssues: issues.length,
+      epicIssues: categorized.epics.completed.length + categorized.epics.inProgress.length + categorized.epics.newIssues.length,
+      subEpicIssues: categorized.subEpicItems.all.length,
+      generatedOn: moment().format('YYYY-MM-DD HH:mm:ss'),
+      projectInfo: projectInfo,
+      teamName: teamName,
+      componentName: componentName,
+      velocity,
+      manualInput: manualInput || {},
+      boards: boards || [],
+      multiBoard: boards && boards.length > 1,
+      subEpicTrends: subEpicTrends,
+      needsAttention: categorized.needsAttention,
+      // Epic-focused data
+      epicsWithIssues: epicGrouping.epicsWithIssues,
+      unassociatedIssues: epicGrouping.unassociatedIssues,
+      // Epic hierarchy data
+      hierarchyMap: hierarchyMap,
+      // Include full categorized data for template flexibility
+      categorized: categorized
+    };
+
+    return template(data);
+  }
+
+  async buildEpicHierarchyMap(epicsWithIssues, jiraClient) {
+    if (!jiraClient || !jiraClient.fetchEpicHierarchy) {
+      console.log('No jiraClient provided or hierarchy fetch not available');
+      return null;
+    }
+
+    console.log('🔗 Building Epic hierarchy map...');
+    const hierarchyMap = {
+      outcomes: new Map(),
+      initiatives: new Map(),
+      epicHierarchies: [],
+      hasHierarchy: false
+    };
+
+    try {
+      // Fetch hierarchy for each Epic
+      for (const epicGroup of epicsWithIssues) {
+        const epicKey = epicGroup.epic.key;
+        console.log(`  📋 Fetching hierarchy for Epic: ${epicKey}`);
+        
+        // Add delay to avoid rate limiting
+        await jiraClient.delay();
+        
+        const hierarchy = await jiraClient.fetchEpicHierarchy(epicKey);
+        if (hierarchy) {
+          // Add Epic info to hierarchy
+          hierarchy.epic = {
+            ...hierarchy.epic,
+            ...epicGroup.epic, // Merge with existing Epic data
+            relatedIssuesCount: epicGroup.relatedIssues.length
+          };
+
+          hierarchyMap.epicHierarchies.push(hierarchy);
+
+          // Track unique outcomes and initiatives
+          if (hierarchy.outcome) {
+            hierarchyMap.outcomes.set(hierarchy.outcome.key, hierarchy.outcome);
+            hierarchyMap.hasHierarchy = true;
+          }
+          if (hierarchy.initiative) {
+            hierarchyMap.initiatives.set(hierarchy.initiative.key, hierarchy.initiative);
+            hierarchyMap.hasHierarchy = true;
+          }
+        }
+      }
+
+      // Convert Maps to Arrays for template use
+      hierarchyMap.uniqueOutcomes = Array.from(hierarchyMap.outcomes.values());
+      hierarchyMap.uniqueInitiatives = Array.from(hierarchyMap.initiatives.values());
+
+      console.log(`✅ Hierarchy map built: ${hierarchyMap.uniqueOutcomes.length} outcomes, ${hierarchyMap.uniqueInitiatives.length} initiatives, ${hierarchyMap.epicHierarchies.length} epics`);
+      
+      return hierarchyMap;
+
+    } catch (error) {
+      console.warn(`Error building Epic hierarchy map: ${error.message}`);
+      return null;
+    }
+  }
+
   async saveReport(content, filename, format = 'markdown') {
     const reportsDir = path.join(process.cwd(), 'reports');
     let subDir;
@@ -360,13 +556,13 @@ export class ReportGenerator {
     return filepath;
   }
 
-  async generateAllFormats(issues, velocityData, manualInput, project = null, boards = []) {
+  async generateAllFormats(issues, velocityData, manualInput, project = null, boards = [], jiraClient = null) {
     console.log('📝 Generating multiple report formats...');
     
     const results = {};
     
-    // Generate Markdown (original)
-    results.markdown = await this.generateExecutiveReport(issues, velocityData, manualInput, project, boards);
+    // Generate Markdown (Epic-focused)
+    results.markdown = await this.generateEpicFocusedReport(issues, velocityData, manualInput, project, boards, jiraClient);
     
     // Generate HTML for Google Docs
     results.html = await this.generateGoogleDocsReport(issues, velocityData, manualInput, project, boards);

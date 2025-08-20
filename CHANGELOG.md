@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2025-08-20
+
+### Added - Claude Workflow Integration 🚀
+- **Multi-Agent Coordination**: Comprehensive workspace management with unique agent IDs and activity tracking
+- **Workflow Commands**: New commands (`/jira-prime`, `/jira-status`, `/jira-health`, `/jira-sync`) for advanced workspace automation
+- **Activity Tracking System**: Persistent activity logging with `workspace-activity.json` for analytics and health monitoring
+- **Workspace Configuration**: Multi-project workspace support with `jira-workspace-config.json`
+- **Performance Analytics**: Comprehensive workspace health checks and recommendations
+- **Real-time Activity Monitoring**: Live tracking of API calls, report generation, and project sync activities
+
+### Added - Epic-First Hierarchy Structure ✨
+- **Epic-Focused Reports**: New `epic-focused.hbs` template that organizes reports by Epics with Stories/Tasks grouped below
+- **Epic Progress Visualization**: Enhanced progress bars with completion percentages for each Epic
+- **Hierarchical Issue Relationships**: Clear parent-child relationships and Epic associations
+- **Strategic Context Mapping**: Links between Epics, Initiatives, and Outcomes for strategic alignment
+- **Comprehensive Epic Metadata**: Status, priority, assignee, and progress tracking for all Epics
+
+### Technical Improvements
+- **Native fetch() Implementation**: Replaced axios dependency with native Node.js fetch API for zero external dependencies
+- **Enhanced Error Handling**: Improved API error handling and user feedback
+- **Module System Improvements**: Fixed import/export issues with ES modules
+- **Dependency Cleanup**: Removed external dependencies to improve security and reduce bundle size
+- **Port Management**: Resolved port conflicts with dedicated backend (3001) and frontend (3000) ports
+
+### New Commands & Scripts
+- `npm run prime` - Initialize/refresh workspace configuration
+- `npm run status` - Comprehensive workspace status report  
+- `npm run health` - Workspace health check and recommendations
+- `npm run sync` - Sync project configurations
+- `npm run workspace` - Alias for status command
+
+### Bug Fixes
+- Fixed axios dependency issues by migrating to native fetch API
+- Resolved import errors in server.js for ManualInputCollector and ProjectSelector
+- Fixed missing helper functions for project selection loading/saving
+- Corrected port conflict issues between services
+
 ## [2.0.0] - 2025-08-06
 
 ### Added

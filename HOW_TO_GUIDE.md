@@ -4,31 +4,47 @@
 1. [Quick Start](#quick-start)
 2. [Minimal Report Generator (NEW)](#minimal-report-generator-new)
 3. [First Time Setup](#first-time-setup)
-4. [Enhanced CLI Features (NEW)](#enhanced-cli-features-new)
-5. [Selecting Projects and Boards](#selecting-projects-and-boards)
-6. [Advanced Board Selection](#advanced-board-selection)
-7. [Generating Reports](#generating-reports)
-8. [Security Vulnerability Tracking (NEW)](#security-vulnerability-tracking-new)
-9. [Epic-Focused Reporting](#epic-focused-reporting)
-10. [Enhanced Report Features](#enhanced-report-features)
-11. [Shareable Formats](#shareable-formats-new)
-12. [Adding Manual Input](#adding-manual-input)
-13. [Understanding Reports](#understanding-reports)
-14. [Troubleshooting](#troubleshooting)
-15. [Advanced Usage](#advanced-usage)
+4. [Claude Workflow Integration (NEW)](#claude-workflow-integration-new)
+5. [Enhanced CLI Features (NEW)](#enhanced-cli-features-new)
+6. [Data Source Selection: Boards vs Issues](#data-source-selection-boards-vs-issues)
+7. [Selecting Projects and Boards](#selecting-projects-and-boards)
+8. [Advanced Board Selection](#advanced-board-selection)
+9. [Issues-Based Filtering](#issues-based-filtering)
+10. [Generating Reports](#generating-reports)
+11. [Component-Based Queries](#component-based-queries)
+12. [Security Vulnerability Tracking (NEW)](#security-vulnerability-tracking-new)
+13. [Epic-Focused Reporting](#epic-focused-reporting)
+14. [Enhanced Report Features](#enhanced-report-features)
+15. [Shareable Formats](#shareable-formats)
+16. [Adding Manual Input](#adding-manual-input)
+17. [Understanding Reports](#understanding-reports)
+18. [Troubleshooting](#troubleshooting)
+19. [Advanced Usage](#advanced-usage)
 
 ---
 
 ## Quick Start
 
-If you've already set up the app, here's the fastest way to generate a report:
+If you've already set up the app, here are the fastest ways to use it:
 
 ```bash
 # Navigate to the project directory
-cd /path/to/Jira-Status-Builder
+cd /path/to/jira_reeport
 
-# Generate a report with current settings
+# Generate a standard executive report
 npm start
+
+# Query issues by component
+npm run component -- --component="clusters-service-core-team"
+
+# Generate all report formats
+npm run report:all
+
+# NEW: Claude Workflow Commands
+npm run status    # Comprehensive workspace status
+npm run health    # Workspace health check
+npm run prime     # Initialize/refresh workspace
+npm run sync      # Sync project configurations
 ```
 
 ---
@@ -175,7 +191,7 @@ If successful, you'll see a report generated for the OCM project.
 
 ---
 
-## Enhanced CLI Features (NEW)
+## Claude Workflow Integration (NEW)
 
 **🔧 Advanced Jira operations with jira-cli patterns**
 
@@ -331,6 +347,284 @@ The enhanced CLI supports jira-cli equivalent flags:
 ✅ **Multi-Format Export** - JSON, CSV, plain text, raw formats  
 ✅ **Issue Relationships** - Complete linking and workflow management  
 ✅ **Rate Limited** - Built-in API throttling for stability  
+=======
+## Claude Workflow Integration (NEW)
+
+### Overview
+
+The jira-reeport system now includes **Claude Workflow Integration** - a comprehensive workspace management system that brings multi-agent coordination, activity tracking, and automated workflow commands to your Jira reporting.
+
+### What is Claude Workflow Integration?
+
+**Claude Workflow** is an advanced workspace management approach that:
+- 🤖 **Coordinates Multiple Agents** - Track and manage different AI agents working on your project
+- 📊 **Monitors Activity** - Persistent tracking of all workspace activities with detailed analytics
+- ⚡ **Automates Workflows** - Pre-built commands for common workspace operations
+- 🔍 **Health Monitoring** - Continuous workspace health checks and recommendations
+- 📈 **Performance Analytics** - Comprehensive metrics on workspace productivity
+
+### New Workflow Commands
+
+#### `npm run status` - Workspace Status Report
+```bash
+npm run status
+```
+**Generates comprehensive workspace analytics:**
+- 📊 Activity summary with agent coordination metrics
+- 🎯 Recent API calls and report generation statistics  
+- 💡 Workspace health score and recommendations
+- 📈 Performance trends and productivity insights
+- 🔄 Multi-agent activity coordination status
+
+#### `npm run health` - Health Check & Recommendations
+```bash
+npm run health
+```
+**Performs automated workspace health assessment:**
+- ✅ Configuration validation and system checks
+- 🔧 Performance optimization recommendations
+- 🚨 Issue detection and resolution suggestions
+- 📋 Maintenance task identification
+- 💡 Best practice recommendations
+
+#### `npm run prime` - Initialize/Refresh Workspace
+```bash
+npm run prime
+```
+**Prepares workspace for optimal operation:**
+- 🏗️ Initializes workspace configuration files
+- 🔄 Refreshes agent coordination settings
+- 📊 Sets up activity tracking infrastructure  
+- ⚙️ Optimizes workspace for multi-agent operations
+- ✨ Ensures all workflow components are ready
+
+#### `npm run sync` - Sync Project Configurations
+```bash
+npm run sync
+```
+**Synchronizes multi-project workspace settings:**
+- 🔄 Syncs project configurations across workspace
+- 📋 Updates cross-project dependencies
+- 🎯 Aligns board selections with workspace strategy
+- 📊 Harmonizes reporting configurations
+- 🤖 Coordinates multi-agent project access
+
+#### `npm run workspace` - Quick Status Alias
+```bash
+npm run workspace
+```
+**Alias for `npm run status`** - provides quick workspace overview
+
+### Activity Tracking System
+
+The integration includes **persistent activity tracking** that monitors:
+
+#### Tracked Activities
+- **API Calls** - Jira API interactions with response times and success rates
+- **Report Generation** - Report creation events with format and performance metrics
+- **Project Synchronization** - Cross-project coordination activities
+- **Agent Coordination** - Multi-agent interaction and handoff events
+- **Configuration Changes** - Workspace setting modifications
+- **Health Checks** - System health monitoring events
+
+#### Activity Data Storage
+**File**: `workspace-activity.json`
+**Purpose**: Persistent activity log with unique agent IDs and timestamps
+**Benefits**: 
+- 📈 Long-term trend analysis
+- 🔍 Performance debugging
+- 🤖 Multi-agent coordination tracking
+- 📊 Workspace productivity insights
+
+### Multi-Agent Coordination
+
+#### Unique Agent IDs
+Each Claude instance gets a **unique agent ID** for coordination:
+- 🏷️ **Agent Identification** - Track which agent performed which activities
+- 🔄 **Handoff Management** - Seamless transitions between agents
+- 📊 **Performance Attribution** - Attribute workspace improvements to specific agents
+- 🤝 **Collaboration Tracking** - Monitor multi-agent collaborative efforts
+
+#### Agent Coordination Features
+- **Activity Attribution** - Every action tracked with agent context
+- **Performance Benchmarking** - Compare agent effectiveness
+- **Workload Distribution** - Balance activities across agents
+- **Collaborative Insights** - Track multi-agent project outcomes
+
+### Workspace Configuration
+
+#### Multi-Project Workspace Support
+**File**: `jira-workspace-config.json`
+**Capabilities**:
+- 🏢 **Multiple Jira Instances** - Support for different Jira installations
+- 📋 **Cross-Project Coordination** - Unified reporting across projects
+- ⚙️ **Shared Configuration** - Common settings across workspace
+- 🔄 **Synchronized State** - Coordinated workspace state management
+
+#### Configuration Example
+```json
+{
+  "workspaceId": "jira-reporting-workspace",
+  "agents": [
+    {
+      "agentId": "claude-workflow-001",
+      "role": "reporting-coordinator",
+      "permissions": ["read", "report", "analyze"]
+    }
+  ],
+  "projects": [
+    {
+      "key": "OCM",
+      "name": "Open Cluster Management",
+      "priority": "high",
+      "reportingFrequency": "weekly"
+    }
+  ],
+  "healthMetrics": {
+    "lastHealthCheck": "2025-08-20T15:54:51.000Z",
+    "status": "healthy"
+  }
+}
+```
+
+### Integration Benefits
+
+#### For Teams
+- **🎯 Improved Coordination** - Better team workflow management
+- **📊 Data-Driven Insights** - Activity analytics for process improvement
+- **🚀 Automated Operations** - Reduced manual workspace management
+- **🔍 Proactive Monitoring** - Early detection of workspace issues
+
+#### For Managers
+- **📈 Productivity Metrics** - Workspace performance analytics
+- **🎯 Resource Optimization** - Efficient agent and resource utilization
+- **💡 Strategic Insights** - Long-term workspace trend analysis
+- **🤖 Process Automation** - Streamlined reporting workflows
+
+#### For Executives
+- **🏢 Organizational Visibility** - Cross-project workspace coordination
+- **📊 Performance Dashboards** - High-level workspace metrics
+- **🎯 Strategic Alignment** - Workspace activities aligned with business goals
+- **💰 ROI Tracking** - Measure workspace automation benefits
+
+### Getting Started with Workflow Integration
+
+#### Initial Setup
+```bash
+# Initialize workspace with Claude Workflow integration
+npm run prime
+
+# Check initial workspace health  
+npm run health
+
+# View comprehensive status
+npm run status
+```
+
+#### Daily Workflow
+```bash
+# Morning: Check workspace status
+npm run status
+
+# Generate reports (automatically tracked)
+npm start
+
+# Evening: Health check and sync
+npm run health
+npm run sync
+```
+
+#### Weekly Review
+```bash
+# Comprehensive workspace analysis
+npm run status
+
+# Generate multi-format reports
+npm run report:all
+
+# Optimize workspace based on recommendations
+npm run health
+```
+
+### Advanced Workflow Features
+
+#### Custom Workflow Commands
+The system supports extensible workflow commands through `workflow-commands.js`:
+- **Custom Commands** - Add organization-specific workflow operations
+- **Integration Hooks** - Connect with other tools and systems  
+- **Automated Triggers** - Event-driven workflow automation
+- **Custom Analytics** - Organization-specific metrics and insights
+
+#### Activity Analytics
+Advanced analytics capabilities:
+- **Trend Analysis** - Long-term workspace performance trends
+- **Bottleneck Identification** - Find workflow efficiency issues
+- **Capacity Planning** - Predict workspace resource needs
+- **ROI Measurement** - Quantify workflow automation benefits
+
+---
+
+## Data Source Selection: Boards vs Issues
+
+### Overview
+
+The reporting system now supports two distinct data collection modes, giving you flexibility in how you track and report on work:
+
+1. **📋 Kanban Boards Mode** - Issues organized by team boards
+2. **📝 Issues List Mode** - Issues filtered by project-wide criteria
+
+### When to Use Each Mode
+
+#### Use Kanban Boards Mode When:
+- **Team-focused reporting** - You want reports aligned with specific teams/boards
+- **Sprint planning** - Your work is organized around sprints and board assignments
+- **Velocity tracking** - You need board-specific throughput metrics
+- **Traditional Agile workflows** - Your team follows Kanban/Scrum board practices
+
+#### Use Issues List Mode When:
+- **Component tracking** - You want to track specific components across teams
+- **Cross-board analysis** - You need issues that span multiple boards
+- **Custom criteria** - You have specific status, priority, or field requirements
+- **Project-wide visibility** - You want to see all work regardless of board assignment
+
+### Data Source Selection Workflow
+
+When you run `npm run select`, you'll now see:
+
+```
+🎯 DATA SOURCE SELECTION
+========================
+How would you like to collect issues for this project?
+
+1. 📋 Work from Kanban Boards
+   → Issues organized by team boards (Board API)
+   → Good for: Sprint planning, team velocity, board-specific reports
+
+2. 📝 Work from Issues List  
+   → Issues filtered by project criteria (Search API)
+   → Good for: Component tracking, custom status filters, cross-board analysis
+
+Choose your data source (1-2):
+```
+
+### Mode Comparison
+
+| Feature | Kanban Boards Mode | Issues List Mode |
+|---------|-------------------|------------------|
+| **Data Source** | Jira Agile API | Jira Core Search API |
+| **Scope** | Board-specific issues | Project-wide search |
+| **Filtering** | Board membership + JQL | Pure JQL criteria |
+| **Best For** | Team organization | Component tracking |
+| **Velocity** | Board-specific | Project-wide |
+| **Use Case** | Sprint reports | Component analysis |
+
+### Your Selection is Saved
+
+Once you make your choice, the system:
+- ✅ Saves your data source mode preference
+- ✅ Stores your specific configuration (boards OR filter criteria)
+- ✅ Uses your saved preference for future reports
+- ✅ Allows you to change modes anytime via `npm run select`
 
 ---
 
@@ -483,6 +777,164 @@ Enter board ID(s): 20600,17975,17291
 
 ---
 
+## Issues-Based Filtering (NEW)
+
+### Overview
+
+When you choose "Issues List" mode, you get powerful filtering capabilities to track work by component, status, and custom criteria - perfect for component-specific team tracking.
+
+### Issues Filter Configuration
+
+After selecting "Work from Issues List," you'll see:
+
+```
+📝 ISSUES FILTER CONFIGURATION
+===============================
+Project: OCM
+
+Configure your filter criteria (press Enter to use defaults):
+
+Issue Types (default: Epic, Story): 
+Statuses (default: "In Progress", "Code Review", "Review", "Closed"):
+Resolution (default: Unresolved):
+Component (optional):
+Date Range in days (default: 7):
+```
+
+### Filter Options Explained
+
+#### Issue Types
+**Default**: `Epic, Story`
+**Purpose**: Limits results to specific issue types
+**Examples**:
+- `Epic, Story` - Strategic and development work
+- `Story, Task, Bug` - All implementation work
+- `Epic` - Only high-level strategic items
+
+#### Statuses
+**Default**: `"In Progress", "Code Review", "Review", "Closed"`
+**Purpose**: Tracks active and recently completed work
+**Examples**:
+- `"In Progress", "Code Review"` - Currently active work
+- `"Done", "Closed"` - Recently completed work
+- `"To Do", "In Progress"` - Work pipeline
+
+#### Resolution
+**Default**: `Unresolved`
+**Purpose**: Filters by completion state
+**Options**:
+- `Unresolved` - Active work (most common)
+- `Done` - Completed work
+- `Fixed` - Fixed issues
+
+#### Component
+**Default**: Empty (all components)
+**Purpose**: Target specific team/component work
+**Examples**:
+- `clusters-service-core-team` - Core team work
+- `observability-team` - Observability work
+- `ui-components` - Frontend work
+
+#### Date Range
+**Default**: `7` days
+**Purpose**: Time window for "updated" issues
+**Examples**:
+- `7` - Last week's activity
+- `14` - Last two weeks
+- `30` - Last month
+
+### Example Configurations
+
+#### Component Team Tracking
+```
+Issue Types: Epic, Story
+Statuses: "In Progress", "Code Review", "Review", "Closed"
+Resolution: Unresolved
+Component: clusters-service-core-team
+Date Range: 7
+```
+**Generated JQL**:
+```jql
+project = OCM 
+AND issuetype in (Epic,Story) 
+AND status in ("In Progress","Code Review","Review","Closed") 
+AND resolution = Unresolved 
+AND component = "clusters-service-core-team"
+AND updated >= "2025-08-04" AND updated <= "2025-08-11"
+ORDER BY priority DESC, updated DESC
+```
+
+#### Cross-Team Epic Tracking
+```
+Issue Types: Epic
+Statuses: "In Progress", "Review"
+Resolution: Unresolved
+Component: (empty - all components)
+Date Range: 14
+```
+
+#### Recently Completed Work
+```
+Issue Types: Story, Task, Bug
+Statuses: "Done", "Closed"
+Resolution: Done
+Component: (specific team)
+Date Range: 7
+```
+
+### Filter Validation
+
+The system automatically validates your filter:
+- ✅ **JQL Syntax Check**: Ensures valid query structure
+- ✅ **Project Compatibility**: Verifies filters work with selected project
+- ✅ **Component Validation**: Checks component exists in project
+- ✅ **Graceful Fallback**: Uses safe defaults if validation fails
+
+### Benefits of Issues-Based Filtering
+
+#### Precision Targeting
+- Track specific components across multiple boards
+- Focus on exact status combinations
+- Custom date ranges for different reporting needs
+
+#### Cross-Board Visibility
+- See all component work regardless of board assignment
+- Track issues that span multiple teams
+- Project-wide analysis capabilities
+
+#### Flexible Reporting
+- Weekly team reports by component
+- Sprint retrospectives with custom criteria
+- Executive summaries with strategic Epic focus
+
+### Saved Configuration
+
+Your issues filter is saved in `project-selection.json`:
+```json
+{
+  "project": {"key": "OCM", "name": "Open Cluster Management"},
+  "dataSourceMode": "issues",
+  "issuesFilter": {
+    "issueTypes": ["Epic", "Story"],
+    "statuses": ["In Progress", "Code Review", "Review", "Closed"],
+    "resolution": "Unresolved",
+    "component": "clusters-service-core-team",
+    "dateRange": 7
+  }
+}
+```
+
+### Command Integration
+
+Once configured, all commands use your filter:
+```bash
+npm start                    # Generate report with your filter
+npm run report:all          # All formats with your filter  
+npm run component           # Now uses saved component filter
+```
+
+---
+
 ## Generating Reports
 
 ### Standard Report Generation
@@ -530,6 +982,160 @@ Your executive report includes:
 - Work breakdown statistics
 - Issues requiring attention
 - **Team name display** from selected Kanban boards
+
+---
+
+## Component-Based Queries
+
+### Overview
+
+The component query feature provides quick, targeted queries for specific components. You can use this feature either as a standalone command or through the new Issues-Based Filtering mode (see [Issues-Based Filtering](#issues-based-filtering-new) section above).
+
+### Two Ways to Query Components
+
+#### Method 1: Quick Component Command
+```bash
+npm run component -- --component="clusters-service-core-team"
+```
+
+#### Method 2: Issues-Based Mode (Recommended)
+```bash
+npm run select
+# Choose "2. Work from Issues List"
+# Configure component: "clusters-service-core-team"
+# Then use: npm start
+```
+
+**Method 2 Benefits:**
+- ✅ Saves your configuration for future use
+- ✅ Works with all report formats (markdown, HTML, text)
+- ✅ Integrates with executive report generation
+- ✅ Customizable filters beyond default settings
+
+### Quick Component Command Details
+
+**What it does:**
+- Queries issues for the specified component
+- Filters by status: "In Progress", "Code Review", "Review", "Closed"
+- Shows only Epic and Story issue types
+- Includes only Unresolved issues
+- Looks back 7 days by default
+- Groups results by status
+- Auto-exports to CSV
+
+### Advanced Parameters
+
+```bash
+npm run component -- --component="clusters-service-core-team" --days=14 --project=OCM
+```
+
+**Parameters:**
+- `--component="component-name"` (required): Component to query
+- `--days=7` (optional): Number of days to look back (default: 7)
+- `--project=OCM` (optional): Project key (default: OCM)
+
+### Examples
+
+**Basic component query:**
+```bash
+npm run component -- --component="clusters-service-core-team"
+```
+
+**Extended timeframe:**
+```bash
+npm run component -- --component="clusters-service-core-team" --days=14
+```
+
+**Different project:**
+```bash
+npm run component -- --component="hypershift-core" --project=HYPERSHIFT --days=7
+```
+
+**Multiple team tracking:**
+```bash
+# Query different components separately
+npm run component -- --component="clusters-service-core-team" --days=7
+npm run component -- --component="observability-team" --days=7
+```
+
+### Output Format
+
+The command generates:
+
+**Console output:**
+```
+🔍 COMPONENT-BASED ISSUE QUERY
+================================
+📋 Project: OCM
+🏷️  Component: clusters-service-core-team
+📅 Timeframe: Last 7 days
+🎯 Statuses: In Progress, Code Review, Review, Closed
+📝 Issue Types: Epic, Story
+⚠️  Resolution: Unresolved
+
+📊 RESULTS: Found 3 issues
+
+🏷️  IN PROGRESS (2 issues):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• [OCM-7158] - CS - Upgrade OCM major RDS version
+  👤 Ying Huang | 🔥 Critical | 📅 Updated: Aug 8
+  📋 Epic: [OCM-7000] Epic: Database Upgrades
+
+🏷️  CODE REVIEW (1 issues):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• [OCM-7201] - Fix cluster deletion validation
+  👤 John Smith | 🔥 High | 📅 Updated: Aug 7
+```
+
+**CSV Export:**
+- File: `data/component-issues-clusters-service-core-team-2025-08-11.csv`
+- Contains: Key, Summary, Status, Assignee, Priority, Updated, Component, Epic, URL
+
+### Use Cases
+
+**Team Stand-ups:**
+```bash
+npm run component -- --component="your-team-component" --days=7
+```
+
+**Sprint Planning:**
+```bash
+npm run component -- --component="your-team-component" --days=14
+```
+
+**Weekly Team Reports:**
+```bash
+npm run component -- --component="your-team-component" --days=7
+```
+
+**Cross-component Analysis:**
+```bash
+# Run multiple queries for comparison
+npm run component -- --component="frontend-team" --days=7
+npm run component -- --component="backend-team" --days=7
+npm run component -- --component="infrastructure-team" --days=7
+```
+
+### JQL Query Generated
+
+The tool automatically generates JQL like this:
+```jql
+project = OCM 
+AND issuetype in (Epic, Story) 
+AND status in ("In Progress", "Code Review", "Review", "Closed") 
+AND resolution = Unresolved 
+AND component = "clusters-service-core-team" 
+AND updated >= "2025-08-04" 
+ORDER BY priority DESC, updated DESC
+```
+
+### Integration with Reports
+
+You can use component query results to:
+1. **Supplement executive reports** with component-specific insights
+2. **Track team velocity** at the component level
+3. **Identify blockers** specific to your component
+4. **Generate focused updates** for stakeholders
 
 ---
 
@@ -1129,7 +1735,6 @@ node setup-test.js
 **"Command not found" or "Module not found"**
 ```bash
 # Make sure you're in the right directory
-cd /path/to/Jira-Status-Builder
 
 # For minimal reporter (no dependencies needed)
 node minimal-report.js
@@ -1375,13 +1980,13 @@ VELOCITY_SPRINTS_COUNT=10  # Use 10 periods for velocity
 **Daily Reports:**
 ```bash
 # Add to cron job
-0 9 * * * cd /path/to/Jira_summary && npm start
+0 9 * * * cd /path/to/jira_reeport && npm start
 ```
 
 **Weekly Team Email:**
 ```bash
 #!/bin/bash
-cd /path/to/Jira_summary
+cd /path/to/jira_reeport
 npm start
 # Email the generated report
 cat reports/executive-report-OCM-$(date +%Y-%m-%d).md | mail -s "Weekly Team Report" team@company.com
@@ -1451,7 +2056,7 @@ npm run report --format=all
 ## File Structure
 
 ```
-Jira_summary/
+jira_reeport/
 ├── reports/                          # Generated reports (organized by format)
 │   ├── markdown/                     # Standard markdown reports
 │   │   └── executive-report-OCM-2025-08-06.md

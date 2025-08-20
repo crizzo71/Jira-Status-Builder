@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { config } from './config.js';
 
 export class JiraClient {
@@ -12,17 +11,26 @@ export class JiraClient {
 
   async makeRequest(endpoint, params = {}) {
     try {
-      const response = await axios.get(`${this.baseUrl}/rest/api/2/${endpoint}`, {
-        auth: this.auth,
-        params,
+      const urlParams = new URLSearchParams(params);
+      const url = `${this.baseUrl}/rest/api/2/${endpoint}?${urlParams}`;
+      
+      const response = await fetch(url, {
+        method: 'GET',
         headers: {
           'Accept': 'application/json',
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Basic ${Buffer.from(`${this.auth.username}:${this.auth.password}`).toString('base64')}`
         }
       });
-      return response.data;
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorData}`);
+      }
+
+      return await response.json();
     } catch (error) {
-      console.error('Jira API Error:', error.response?.data || error.message);
+      console.error('Jira API Error:', error.message);
       throw error;
     }
   }

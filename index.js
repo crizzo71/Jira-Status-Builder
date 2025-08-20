@@ -2,6 +2,7 @@ import { JiraCliClient } from './jira-cli-client.js';
 import { ReportGenerator } from './report-generator.js';
 import { ManualInputCollector } from './manual-input.js';
 import { ProjectSelector } from './project-selector.js';
+import { WorkflowCommands } from './workflow-commands.js';
 import { config } from './config.js';
 // Using native Date instead of moment for now
 const moment = (date) => {
@@ -33,10 +34,12 @@ async function generateExecutiveReport(selectedProject = null, selectedBoard = n
     const projectSelector = new ProjectSelector(jiraClient);
     
     // Project and board selection
-    let project, boards;
+    let project, boards, dataSourceMode, issuesFilter;
     if (selectedProject) {
       project = selectedProject;
       boards = Array.isArray(selectedBoard) ? selectedBoard : (selectedBoard ? [selectedBoard] : []);
+      dataSourceMode = 'boards'; // Default for manual specification
+      issuesFilter = null;
       console.log(`📋 Using specified project: ${project.key}`);
       if (boards.length > 0) {
         if (boards.length === 1) {
@@ -46,21 +49,29 @@ async function generateExecutiveReport(selectedProject = null, selectedBoard = n
         }
       }
     } else {
-      // Try quick config selection first
-      const quickSelection = await projectSelector.quickSelectFromConfig();
+      // Try to load saved selection first
+      const quickSelection = await loadSelectionFromConfig();
       if (quickSelection) {
         project = quickSelection.project;
         boards = quickSelection.boards;
+        dataSourceMode = quickSelection.dataSourceMode || 'boards';
+        issuesFilter = quickSelection.issuesFilter;
       } else {
         // Interactive selection
         const selection = await projectSelector.selectProjectAndBoard();
         project = selection.project;
         boards = selection.boards;
+        dataSourceMode = selection.dataSourceMode;
+        issuesFilter = selection.issuesFilter;
+        
+        // Save the new selection
+        await saveSelectionToConfig(selection);
       }
     }
     
-    // Update jiraClient with selected project/boards
+    // Update jiraClient with selected project/boards and data source mode
     jiraClient.setProjectAndBoard(project, boards);
+    jiraClient.setDataSourceMode(dataSourceMode, issuesFilter);
     
     // Get issues data
     console.log('📊 Fetching issues from Jira...');
@@ -96,7 +107,7 @@ async function generateExecutiveReport(selectedProject = null, selectedBoard = n
     
     if (format === 'all') {
       console.log('🎯 Generating executive reports in all formats...');
-      const reports = await reportGenerator.generateAllFormats(allIssues, velocityData, manualInput, project, boards);
+      const reports = await reportGenerator.generateAllFormats(allIssues, velocityData, manualInput, project, boards, jiraClient);
       
       const markdownFile = `executive-report-${projectSuffix}-${moment().format('YYYY-MM-DD')}.md`;
       const htmlFile = `executive-report-${projectSuffix}-${moment().format('YYYY-MM-DD')}.html`;
@@ -132,7 +143,7 @@ async function generateExecutiveReport(selectedProject = null, selectedBoard = n
           break;
         case 'markdown':
         default:
-          reportContent = await reportGenerator.generateExecutiveReport(allIssues, velocityData, manualInput, project, boards);
+          reportContent = await reportGenerator.generateEpicFocusedReport(allIssues, velocityData, manualInput, project, boards, jiraClient);
           extension = 'md';
           formatType = 'markdown';
           break;
@@ -206,6 +217,118 @@ async function collectManualInput() {
   }
 }
 
+async function queryByComponent() {
+  try {
+    const jiraClient = new JiraCliClient();
+    
+    // Get component from command line arguments
+    const componentArg = process.argv.find(arg => arg.startsWith('--component='));
+    const daysArg = process.argv.find(arg => arg.startsWith('--days='));
+    const projectArg = process.argv.find(arg => arg.startsWith('--project='));
+    
+    if (!componentArg) {
+      console.error('❌ Component is required. Usage: npm run component -- --component="clusters-service-core-team"');
+      console.log('\nExample:');
+      console.log('  npm run component -- --component="clusters-service-core-team" --days=7 --project=OCM');
+      return;
+    }
+    
+    const component = componentArg.split('=')[1].replace(/"/g, '');
+    const days = daysArg ? parseInt(daysArg.split('=')[1]) : 7;
+    const project = projectArg ? projectArg.split('=')[1] : 'OCM';
+    
+    // Set up project context
+    jiraClient.selectedProject = { key: project, name: project };
+    
+    console.log('\n🔍 COMPONENT-BASED ISSUE QUERY');
+    console.log('================================');
+    console.log(`📋 Project: ${project}`);
+    console.log(`🏷️  Component: ${component}`);
+    console.log(`📅 Timeframe: Last ${days} days`);
+    console.log(`🎯 Statuses: In Progress, Code Review, Review, Closed`);
+    console.log(`📝 Issue Types: Epic, Story`);
+    console.log(`⚠️  Resolution: Unresolved\n`);
+    
+    // Query issues
+    const issues = await jiraClient.getIssuesByComponent({
+      component: component,
+      timeframe: {
+        startDate: new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        endDate: new Date().toISOString().split('T')[0]
+      },
+      projectKey: project
+    });
+    
+    // Display results
+    console.log(`\n📊 RESULTS: Found ${issues.length} issues\n`);
+    
+    if (issues.length === 0) {
+      console.log('No issues found matching the criteria.');
+      return;
+    }
+    
+    // Group by status
+    const byStatus = {};
+    issues.forEach(issue => {
+      const status = issue.status;
+      if (!byStatus[status]) byStatus[status] = [];
+      byStatus[status].push(issue);
+    });
+    
+    // Display by status
+    Object.entries(byStatus).forEach(([status, statusIssues]) => {
+      console.log(`\n🏷️  ${status.toUpperCase()} (${statusIssues.length} issues):`);
+      console.log('━'.repeat(50));
+      
+      statusIssues.forEach(issue => {
+        console.log(`• [${issue.key}](${issue.url}) - ${issue.summary}`);
+        console.log(`  👤 ${issue.assignee || 'Unassigned'} | 🔥 ${issue.priority} | 📅 Updated: ${moment(issue.updated).format('MMM DD')}`);
+        if (issue.epic) {
+          console.log(`  📋 Epic: [${issue.epic.key}](${issue.epic.url}) ${issue.epic.summary}`);
+        }
+        console.log('');
+      });
+    });
+    
+    // Summary
+    console.log('\n📈 SUMMARY');
+    console.log('━'.repeat(20));
+    Object.entries(byStatus).forEach(([status, statusIssues]) => {
+      console.log(`${status}: ${statusIssues.length} issues`);
+    });
+    
+    // Export to CSV
+    const timestamp = moment().format('YYYY-MM-DD');
+    const filename = `data/component-issues-${component.replace(/\s+/g, '-')}-${timestamp}.csv`;
+    
+    try {
+      const fs = await import('fs');
+      const csvContent = [
+        'Key,Summary,Status,Assignee,Priority,Updated,Component,Epic,URL',
+        ...issues.map(issue => [
+          issue.key,
+          `"${issue.summary}"`,
+          issue.status,
+          issue.assignee || 'Unassigned',
+          issue.priority,
+          issue.updated.split('T')[0],
+          component,
+          issue.epic ? issue.epic.key : '',
+          issue.url
+        ].join(','))
+      ].join('\n');
+      
+      fs.writeFileSync(filename, csvContent);
+      console.log(`\n✅ Results exported to: ${filename}`);
+    } catch (error) {
+      console.warn('Could not export to CSV:', error.message);
+    }
+    
+  } catch (error) {
+    console.error('Error querying by component:', error.message);
+  }
+}
+
 async function selectProjectAndBoard() {
   try {
     const jiraClient = new JiraCliClient();
@@ -238,12 +361,15 @@ async function saveSelectionToConfig(selection) {
     
     const config = {
       project: selection.project,
-      boards: selection.boards,
+      dataSourceMode: selection.dataSourceMode || 'boards', // Default for backward compatibility
+      boards: selection.boards || [],
+      issuesFilter: selection.issuesFilter || null,
       selectedAt: new Date().toISOString()
     };
     
     await fs.writeFile(configPath, JSON.stringify(config, null, 2));
     console.log(`💾 Selection saved to ${configPath}`);
+    console.log(`📊 Mode: ${config.dataSourceMode}`);
     
   } catch (error) {
     console.warn('Could not save selection to config:', error.message);
@@ -258,19 +384,33 @@ async function loadSelectionFromConfig() {
     const data = await fs.readFile(configPath, 'utf-8');
     const config = JSON.parse(data);
     
-    // Handle both old and new format
+    // Handle both old and new format for backward compatibility
+    const dataSourceMode = config.dataSourceMode || 'boards';
     const boards = config.boards || (config.board ? [config.board] : []);
+    const issuesFilter = config.issuesFilter || null;
+    
     let selectionText = `📋 Loaded saved selection: ${config.project.key}`;
-    if (boards.length === 1 && boards[0] && boards[0].name) {
-      selectionText += ` | ${boards[0].name}`;
-    } else if (boards.length > 1) {
-      selectionText += ` | ${boards.length} boards`;
+    
+    if (dataSourceMode === 'boards') {
+      if (boards.length === 1 && boards[0] && boards[0].name) {
+        selectionText += ` | ${boards[0].name}`;
+      } else if (boards.length > 1) {
+        selectionText += ` | ${boards.length} boards`;
+      }
+    } else if (dataSourceMode === 'issues') {
+      selectionText += ` | Issues mode`;
+      if (issuesFilter && issuesFilter.component) {
+        selectionText += ` | ${issuesFilter.component}`;
+      }
     }
+    
     console.log(selectionText);
     
     return {
       project: config.project,
-      boards: boards.filter(board => board && board.id && board.name) // Filter out invalid boards
+      dataSourceMode,
+      boards: boards.filter(board => board && board.id && board.name), // Filter out invalid boards
+      issuesFilter
     };
     
   } catch (error) {
@@ -322,11 +462,46 @@ switch (command) {
       selectProjectAndBoard();
     }
     break;
+  case 'component':
+    if (checkConfiguration()) {
+      queryByComponent();
+    }
+    break;
   case 'quick':
     if (checkConfiguration()) {
       // Quick start with OCM
       const quickProject = { key: 'OCM', name: 'Open Cluster Management', id: 'quick' };
       generateExecutiveReport(quickProject, [], reportFormat);
+    }
+    break;
+  case 'workflow':
+    if (checkConfiguration()) {
+      const workflowCommand = process.argv[3]; // e.g., '/jira-prime'
+      const workflowArgs = {};
+      
+      // Parse additional arguments
+      process.argv.slice(4).forEach(arg => {
+        if (arg.startsWith('--')) {
+          const [key, value] = arg.substring(2).split('=');
+          workflowArgs[key] = value || true;
+        }
+      });
+      
+      console.log(`🔄 Executing workflow command: ${workflowCommand}`);
+      const workflowCommands = new WorkflowCommands();
+      workflowCommands.executeCommand(workflowCommand, workflowArgs)
+        .then(result => {
+          if (result.success) {
+            console.log(`✅ Command completed successfully in ${Math.round(result.duration / 1000)}s`);
+          } else {
+            console.error(`❌ Command failed:`, result.result.error);
+            process.exit(1);
+          }
+        })
+        .catch(error => {
+          console.error(`❌ Workflow command error:`, error.message);
+          process.exit(1);
+        });
     }
     break;
   case 'report':
@@ -344,7 +519,8 @@ switch (command) {
         // Try to load saved selection first
         loadSelectionFromConfig().then(savedSelection => {
           if (savedSelection) {
-            generateExecutiveReport(savedSelection.project, savedSelection.boards, reportFormat);
+            // Pass null to use the config loading path that handles dataSourceMode correctly
+            generateExecutiveReport(null, null, reportFormat);
           } else {
             generateExecutiveReport(null, null, reportFormat);
           }

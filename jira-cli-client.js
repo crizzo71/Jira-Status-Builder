@@ -48,6 +48,98 @@ export class JiraCliClient {
     return null;
   }
 
+  extractHierarchyInfo(fields) {
+    const issueLinks = fields.issuelinks || [];
+    const hierarchy = {
+      epic: null,
+      initiative: null,
+      outcome: null
+    };
+    
+    // Look for hierarchical relationships in issue links
+    for (const link of issueLinks) {
+      const linkedIssue = link.inwardIssue || link.outwardIssue;
+      if (!linkedIssue || !linkedIssue.fields) continue;
+      
+      const linkedType = linkedIssue.fields.issuetype?.name?.toLowerCase();
+      const linkTypeName = link.type?.name?.toLowerCase() || '';
+      
+      // Epic relationships
+      if (linkTypeName.includes('epic') || linkedType === 'epic') {
+        hierarchy.epic = {
+          key: linkedIssue.key,
+          summary: linkedIssue.fields.summary,
+          url: `${config.jira.baseUrl}/browse/${linkedIssue.key}`,
+          type: linkedIssue.fields.issuetype?.name
+        };
+      }
+      
+      // Initiative relationships  
+      if (linkedType === 'initiative' || linkTypeName.includes('initiative')) {
+        hierarchy.initiative = {
+          key: linkedIssue.key,
+          summary: linkedIssue.fields.summary,
+          url: `${config.jira.baseUrl}/browse/${linkedIssue.key}`,
+          type: linkedIssue.fields.issuetype?.name
+        };
+      }
+      
+      // Outcome relationships
+      if (linkedType === 'outcome' || linkTypeName.includes('outcome')) {
+        hierarchy.outcome = {
+          key: linkedIssue.key,
+          summary: linkedIssue.fields.summary,
+          url: `${config.jira.baseUrl}/browse/${linkedIssue.key}`,
+          type: linkedIssue.fields.issuetype?.name
+        };
+      }
+    }
+    
+    return hierarchy;
+  }
+
+  async fetchEpicHierarchy(epicKey) {
+    try {
+      // Fetch the Epic issue with all hierarchy-related fields
+      const url = `${config.jira.baseUrl}/rest/api/2/issue/${epicKey}`;
+      const params = new URLSearchParams({
+        fields: 'key,summary,status,issuetype,issuelinks,parent'
+      });
+      
+      await this.delay(); // Rate limiting
+      
+      const response = await fetch(`${url}?${params}`, {
+        headers: {
+          'Authorization': `Bearer ${config.jira.apiToken}`,
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        console.warn(`Could not fetch Epic hierarchy for ${epicKey}`);
+        return null;
+      }
+      
+      const issue = await response.json();
+      const hierarchy = this.extractHierarchyInfo(issue.fields);
+      
+      // Add the Epic itself to the hierarchy
+      hierarchy.epic = {
+        key: issue.key,
+        summary: issue.fields.summary,
+        url: `${config.jira.baseUrl}/browse/${issue.key}`,
+        type: issue.fields.issuetype?.name,
+        status: issue.fields.status?.name
+      };
+      
+      return hierarchy;
+      
+    } catch (error) {
+      console.warn(`Error fetching Epic hierarchy for ${epicKey}: ${error.message}`);
+      return null;
+    }
+  }
+
   async fetchEpicProgress(epicKey) {
     try {
       // Fetch all issues linked to this Epic
@@ -137,6 +229,16 @@ export class JiraCliClient {
     this.selectedBoard = this.selectedBoards.length > 0 ? this.selectedBoards[0] : null;
   }
 
+  setDataSourceMode(mode, issuesFilter = null) {
+    this.dataSourceMode = mode;
+    this.issuesFilter = issuesFilter;
+    
+    console.log(`📊 Data source mode: ${mode}`);
+    if (mode === 'issues' && issuesFilter) {
+      console.log(`   Filter: ${JSON.stringify(issuesFilter, null, 2)}`);
+    }
+  }
+
   checkJiraCliInstalled() {
     try {
       execSync('jira version', { stdio: 'pipe' });
@@ -169,6 +271,10 @@ export class JiraCliClient {
       projectKeys = this.selectedProject ? [this.selectedProject.key] : config.jira.projectKeys,
       weeksBack = config.report.weeksBack,
       status = null,
+      component = null,
+      issueType = null,
+      resolution = null,
+      timeframe = null,
       orderBy = 'updated DESC'
     } = options;
 
@@ -193,10 +299,39 @@ export class JiraCliClient {
     if (status) {
       if (jql) jql += ' AND ';
       if (Array.isArray(status)) {
-        jql += `status in (${status.join(',')})`;
+        jql += `status in (${status.map(s => `"${s}"`).join(',')})`;
       } else {
         jql += `status = "${status}"`;
       }
+    }
+
+    if (component) {
+      if (jql) jql += ' AND ';
+      if (Array.isArray(component)) {
+        jql += `component in (${component.map(c => `"${c}"`).join(',')})`;
+      } else {
+        jql += `component = "${component}"`;
+      }
+    }
+
+    if (issueType) {
+      if (jql) jql += ' AND ';
+      if (Array.isArray(issueType)) {
+        jql += `issuetype in (${issueType.join(',')})`;
+      } else {
+        jql += `issuetype = ${issueType}`;
+      }
+    }
+
+    if (resolution) {
+      if (jql) jql += ' AND ';
+      jql += `resolution = ${resolution}`;
+    }
+
+    // Custom timeframe support (overrides weeksBack if provided)
+    if (timeframe && timeframe.startDate && timeframe.endDate) {
+      if (jql) jql += ' AND ';
+      jql += `updated >= "${timeframe.startDate}" AND updated <= "${timeframe.endDate}"`;
     }
 
     if (orderBy) {
@@ -239,6 +374,11 @@ export class JiraCliClient {
     try {
       console.log(`Executing JQL via REST API: ${jql}`);
       
+      // Handle issues mode with custom filter
+      if (this.dataSourceMode === 'issues' && this.issuesFilter) {
+        return await this.executeIssuesBasedQuery();
+      }
+      
       // If boards are selected, get issues from all selected boards
       if (this.selectedBoards && this.selectedBoards.length > 0 && this.selectedBoards[0] && this.selectedBoards[0].id) {
         return await this.getIssuesFromMultipleBoards(jql);
@@ -251,6 +391,8 @@ export class JiraCliClient {
         maxResults: '100'
       });
       
+      console.log(`🔍 API Request: ${url}?${params}`);
+      
       const response = await fetch(`${url}?${params}`, {
         headers: {
           'Authorization': `Bearer ${config.jira.apiToken}`,
@@ -259,8 +401,12 @@ export class JiraCliClient {
         }
       });
       
+      console.log(`📡 Response Status: ${response.status} ${response.statusText}`);
+      
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        const errorText = await response.text();
+        console.error(`❌ API Error Response: ${errorText}`);
+        throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
       }
       
       const data = await response.json();
@@ -278,6 +424,7 @@ export class JiraCliClient {
         issuetype: issue.fields.issuetype.name,
         url: `${config.jira.baseUrl}/browse/${issue.key}`,
         epic: this.extractEpicInfo(issue.fields),
+        hierarchy: this.extractHierarchyInfo(issue.fields),
         parent: issue.fields.parent ? {
           key: issue.fields.parent.key,
           summary: issue.fields.parent.fields?.summary || 'Unknown',
@@ -325,7 +472,7 @@ export class JiraCliClient {
     const completedStatuses = ['Done', 'Resolved', 'Closed'];
     const jql = this.buildJQLQuery({ 
       weeksBack, 
-      status: completedStatuses.map(s => `"${s}"`),
+      status: completedStatuses,
       orderBy: 'resolutiondate DESC'
     });
     const issues = await this.executeQuery(jql);
@@ -335,10 +482,44 @@ export class JiraCliClient {
   async getInProgressIssues() {
     const inProgressStatuses = ['In Progress', 'In Review', 'Testing', 'Code Review'];
     const jql = this.buildJQLQuery({ 
-      status: inProgressStatuses.map(s => `"${s}"`),
+      status: inProgressStatuses,
       weeksBack: null,
       orderBy: 'priority DESC, updated DESC'
     });
+    const issues = await this.executeQuery(jql);
+    return await this.enrichIssuesWithEpicProgress(issues);
+  }
+
+  async getIssuesByComponent(options = {}) {
+    const {
+      component,
+      statuses = ['In Progress', 'Code Review', 'Review', 'Closed'],
+      issueTypes = ['Epic', 'Story'],
+      resolution = 'Unresolved',
+      timeframe = null,
+      projectKey = this.selectedProject?.key || 'OCM'
+    } = options;
+
+    if (!component) {
+      throw new Error('Component is required for component-based queries');
+    }
+
+    const jql = this.buildJQLQuery({
+      projectKeys: [projectKey],
+      status: statuses,
+      component: component,
+      issueType: issueTypes,
+      resolution: resolution,
+      timeframe: timeframe,
+      weeksBack: timeframe ? null : 1, // Default to 1 week if no timeframe specified
+      orderBy: 'priority DESC, updated DESC'
+    });
+
+    console.log(`\n🔍 Querying issues for component: ${component}`);
+    console.log(`📋 Statuses: ${statuses.join(', ')}`);
+    console.log(`📝 Issue Types: ${issueTypes.join(', ')}`);
+    console.log(`🔧 Resolution: ${resolution}`);
+    
     const issues = await this.executeQuery(jql);
     return await this.enrichIssuesWithEpicProgress(issues);
   }
@@ -364,7 +545,7 @@ export class JiraCliClient {
       
       const jql = this.buildJQLQuery({
         weeksBack: null,
-        status: ['"Done"', '"Resolved"', '"Closed"'],
+        status: ['Done', 'Resolved', 'Closed'],
         orderBy: null
       }) + ` AND resolutiondate >= "${weekStart.toISOString().split('T')[0]}" AND resolutiondate <= "${weekEnd.toISOString().split('T')[0]}"`;
       
@@ -378,6 +559,23 @@ export class JiraCliClient {
     }
     
     return throughputData.reverse(); // Most recent first
+  }
+
+  // Helper method to build exact JQL query matching your requirements
+  buildComponentJQL(component, timeframeDays = 7) {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - timeframeDays);
+    
+    const project = this.selectedProject?.key || 'OCM';
+    
+    return `project = ${project} ` +
+           `AND issuetype in (Epic, Story) ` +
+           `AND status in ("In Progress", "Code Review", Review, Closed) ` +
+           `AND resolution = Unresolved ` +
+           `AND component = ${component} ` +
+           `AND updated >= "${startDate.toISOString().split('T')[0]}" ` +
+           `ORDER BY priority DESC, updated DESC`;
   }
 
   calculateStoryPoints(issues) {
@@ -443,6 +641,7 @@ export class JiraCliClient {
         issuetype: issue.fields.issuetype.name,
         url: `${config.jira.baseUrl}/browse/${issue.key}`,
         epic: this.extractEpicInfo(issue.fields),
+        hierarchy: this.extractHierarchyInfo(issue.fields),
         parent: issue.fields.parent ? {
           key: issue.fields.parent.key,
           summary: issue.fields.parent.fields?.summary || 'Unknown',
@@ -485,8 +684,11 @@ export class JiraCliClient {
             }
           });
           
+          console.log(`    📡 Board ${board.name} Response: ${response.status} ${response.statusText}`);
+          
           if (!response.ok) {
-            console.warn(`Could not get issues from board ${board.name}, skipping`);
+            const errorText = await response.text();
+            console.warn(`Could not get issues from board ${board.name}: ${response.status} - ${errorText}`);
             continue;
           }
           
@@ -583,5 +785,94 @@ export class JiraCliClient {
         url: `${config.jira.baseUrl}/browse/${issue.fields.parent.key}`
       } : null
     }));
+  }
+
+  async executeIssuesBasedQuery() {
+    try {
+      const jql = this.buildIssuesJQL(this.issuesFilter, this.selectedProject);
+      console.log(`🔍 Issues-based query: ${jql}`);
+      
+      const url = `${config.jira.baseUrl}/rest/api/2/search`;
+      const params = new URLSearchParams({
+        jql: jql,
+        fields: 'key,summary,status,assignee,updated,created,priority,resolution,issuetype,issuelinks,parent,customfield_12311140,epic',
+        maxResults: '100'
+      });
+      
+      console.log(`🔍 API Request: ${url}?${params}`);
+      
+      const response = await fetch(`${url}?${params}`, {
+        headers: {
+          'Authorization': `Bearer ${config.jira.apiToken}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      console.log(`📡 Response Status: ${response.status} ${response.statusText}`);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`❌ API Error Response: ${errorText}`);
+        throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
+      }
+      
+      const data = await response.json();
+      
+      // Convert Jira API response to our expected format
+      return data.issues.map(issue => ({
+        key: issue.key,
+        summary: issue.fields.summary,
+        status: issue.fields.status.name,
+        assignee: issue.fields.assignee ? issue.fields.assignee.displayName : null,
+        updated: issue.fields.updated,
+        created: issue.fields.created,
+        priority: issue.fields.priority ? issue.fields.priority.name : 'None',
+        resolution: issue.fields.resolution ? issue.fields.resolution.name : null,
+        issuetype: issue.fields.issuetype.name,
+        url: `${config.jira.baseUrl}/browse/${issue.key}`,
+        epic: this.extractEpicInfo(issue.fields),
+        hierarchy: this.extractHierarchyInfo(issue.fields),
+        parent: issue.fields.parent ? {
+          key: issue.fields.parent.key,
+          summary: issue.fields.parent.fields?.summary || 'Unknown',
+          url: `${config.jira.baseUrl}/browse/${issue.fields.parent.key}`
+        } : null
+      }));
+      
+    } catch (error) {
+      console.error('Error executing issues-based query:', error.message);
+      throw error;
+    }
+  }
+
+  buildIssuesJQL(filter, project) {
+    let jql = `project = ${project.key}`;
+    
+    if (filter.issueTypes && filter.issueTypes.length > 0) {
+      jql += ` AND issuetype in (${filter.issueTypes.join(',')})`;
+    }
+    
+    if (filter.statuses && filter.statuses.length > 0) {
+      jql += ` AND status in (${filter.statuses.map(s => `\"${s}\"`).join(',')})`;
+    }
+    
+    if (filter.resolution) {
+      jql += ` AND resolution = ${filter.resolution}`;
+    }
+    
+    if (filter.component) {
+      jql += ` AND component = \"${filter.component}\"`;
+    }
+    
+    // Date range
+    const endDate = new Date().toISOString().split('T')[0];
+    const startDate = new Date(Date.now() - filter.dateRange * 24 * 60 * 60 * 1000)
+      .toISOString().split('T')[0];
+    
+    jql += ` AND updated >= \"${startDate}\" AND updated <= \"${endDate}\"`;
+    jql += ` ORDER BY priority DESC, updated DESC`;
+    
+    return jql;
   }
 }

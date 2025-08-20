@@ -404,6 +404,182 @@ export class ProjectSelector {
     });
   }
 
+  async selectDataSourceMode() {
+    console.log('\\n🎯 DATA SOURCE SELECTION');
+    console.log('========================');
+    console.log('How would you like to collect issues for this project?\\n');
+    
+    console.log('1. 📋 Work from Kanban Boards');
+    console.log('   → Issues organized by team boards (Board API)');
+    console.log('   → Good for: Sprint planning, team velocity, board-specific reports\\n');
+    
+    console.log('2. 📝 Work from Issues List');
+    console.log('   → Issues filtered by project criteria (Search API)');
+    console.log('   → Good for: Component tracking, custom status filters, cross-board analysis\\n');
+    
+    const rl = this.createReadlineInterface();
+    
+    try {
+      while (true) {
+        const choice = await this.askQuestion(rl, 'Choose your data source (1-2): ');
+        
+        if (choice === '1') {
+          console.log('\\n✅ Selected: Kanban Boards mode');
+          return 'boards';
+        } else if (choice === '2') {
+          console.log('\\n✅ Selected: Issues List mode');
+          return 'issues';
+        } else {
+          console.log('❌ Invalid choice. Please enter 1 or 2.');
+        }
+      }
+    } finally {
+      rl.close();
+    }
+  }
+
+  async configureIssuesFilter(project) {
+    console.log('\\n📝 ISSUES FILTER CONFIGURATION');
+    console.log('===============================');
+    console.log(`Project: ${project.key}\\n`);
+    
+    const rl = this.createReadlineInterface();
+    
+    try {
+      // Default values
+      const defaults = {
+        issueTypes: ['Epic', 'Story'],
+        statuses: ['In Progress', 'Code Review', 'Review', 'Closed'],
+        resolution: 'Unresolved',
+        component: '',
+        dateRange: 7
+      };
+      
+      console.log('Configure your filter criteria (press Enter to use defaults):\\n');
+      
+      // Issue Types
+      const issueTypesInput = await this.askQuestion(rl, 
+        `Issue Types (default: ${defaults.issueTypes.join(', ')}): `);
+      const issueTypes = issueTypesInput ? 
+        issueTypesInput.split(',').map(t => t.trim()) : 
+        defaults.issueTypes;
+      
+      // Statuses
+      const statusesInput = await this.askQuestion(rl, 
+        `Statuses (default: ${defaults.statuses.map(s => `"${s}"`).join(', ')}): `);
+      const statuses = statusesInput ? 
+        statusesInput.split(',').map(s => s.trim().replace(/"/g, '')) : 
+        defaults.statuses;
+      
+      // Resolution
+      const resolution = await this.askQuestion(rl, 
+        `Resolution (default: ${defaults.resolution}): `) || defaults.resolution;
+      
+      // Component (mandatory for Issues mode)
+      let component;
+      while (true) {
+        component = await this.askQuestion(rl, 
+          'Component (required): ');
+        if (component && component.trim()) {
+          break;
+        }
+        console.log('❌ Component is required for Issues-Based filtering. Please enter a component name.');
+      }
+      
+      // Date Range
+      const dateRangeInput = await this.askQuestion(rl, 
+        `Date Range in days (default: ${defaults.dateRange}): `);
+      const dateRange = dateRangeInput ? 
+        parseInt(dateRangeInput) : 
+        defaults.dateRange;
+      
+      const filter = {
+        issueTypes,
+        statuses,
+        resolution,
+        component: component.trim(),
+        dateRange
+      };
+      
+      // Validate the filter
+      if (await this.validateIssuesFilter(filter, project)) {
+        return filter;
+      } else {
+        console.log('\\n⚠️  Filter validation failed. Using safe defaults with provided component.');
+        // Ensure component is still set even if validation fails
+        const safeDefaults = { ...defaults, component: component.trim() };
+        return safeDefaults;
+      }
+      
+    } finally {
+      rl.close();
+    }
+  }
+
+  async validateIssuesFilter(filter, project) {
+    try {
+      // Build test JQL
+      const testJQL = this.buildIssuesJQL(filter, project);
+      
+      // Test with maxResults=1
+      const url = `${config.jira.baseUrl}/rest/api/2/search`;
+      const params = new URLSearchParams({
+        jql: testJQL,
+        maxResults: '1'
+      });
+      
+      const response = await fetch(`${url}?${params}`, {
+        headers: {
+          'Authorization': `Bearer ${config.jira.apiToken}`,
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        console.warn(`JQL validation failed: ${error.errorMessages?.join(', ') || response.statusText}`);
+        return false;
+      }
+      
+      console.log('✅ Filter validated successfully');
+      return true;
+      
+    } catch (error) {
+      console.warn(`Filter validation error: ${error.message}`);
+      return false;
+    }
+  }
+
+  buildIssuesJQL(filter, project) {
+    let jql = `project = ${project.key}`;
+    
+    if (filter.issueTypes && filter.issueTypes.length > 0) {
+      jql += ` AND issuetype in (${filter.issueTypes.join(',')})`;
+    }
+    
+    if (filter.statuses && filter.statuses.length > 0) {
+      jql += ` AND status in (${filter.statuses.map(s => `"${s}"`).join(',')})`;
+    }
+    
+    if (filter.resolution) {
+      jql += ` AND resolution = ${filter.resolution}`;
+    }
+    
+    if (filter.component) {
+      jql += ` AND component = "${filter.component}"`;
+    }
+    
+    // Date range
+    const endDate = new Date().toISOString().split('T')[0];
+    const startDate = new Date(Date.now() - filter.dateRange * 24 * 60 * 60 * 1000)
+      .toISOString().split('T')[0];
+    
+    jql += ` AND updated >= "${startDate}" AND updated <= "${endDate}"`;
+    jql += ` ORDER BY priority DESC, updated DESC`;
+    
+    return jql;
+  }
+
   async selectProjectAndBoard() {
     console.log('\\n🎯 PROJECT AND BOARD SELECTION');
     console.log('================================');
@@ -418,21 +594,40 @@ export class ProjectSelector {
     
     console.log(`\\n✅ Selected project: ${project.key} - ${project.name}`);
     
-    const boards = await this.selectBoardInteractively(project);
-    if (boards.length > 0) {
-      if (boards.length === 1) {
-        console.log(`✅ Selected board: ${boards[0].name} (${boards[0].type})`);
+    // NEW: Data source mode selection
+    const dataSourceMode = await this.selectDataSourceMode();
+    
+    let boards = [];
+    let issuesFilter = null;
+    
+    if (dataSourceMode === 'boards') {
+      boards = await this.selectBoardInteractively(project);
+      if (boards.length > 0) {
+        if (boards.length === 1) {
+          console.log(`✅ Selected board: ${boards[0].name} (${boards[0].type})`);
+        } else {
+          console.log(`✅ Selected ${boards.length} boards:`);
+          boards.forEach(board => {
+            console.log(`   - ${board.name} (${board.type})`);
+          });
+        }
       } else {
-        console.log(`✅ Selected ${boards.length} boards:`);
-        boards.forEach(board => {
-          console.log(`   - ${board.name} (${board.type})`);
-        });
+        console.log(`✅ Using project-wide board queries for ${project.key}`);
       }
-    } else {
-      console.log(`✅ Using project-wide queries for ${project.key}`);
+    } else if (dataSourceMode === 'issues') {
+      issuesFilter = await this.configureIssuesFilter(project);
+      console.log(`✅ Configured issues filter for ${project.key}`);
+      console.log(`   Component: ${issuesFilter.component || 'All components'}`);
+      console.log(`   Statuses: ${issuesFilter.statuses.join(', ')}`);
+      console.log(`   Date Range: Last ${issuesFilter.dateRange} days`);
     }
     
-    return { project, boards };
+    return { 
+      project, 
+      boards, 
+      dataSourceMode, 
+      issuesFilter 
+    };
   }
 
   async getProjectsFromConfig() {

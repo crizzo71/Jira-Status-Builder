@@ -1,6 +1,8 @@
 # Jira Executive Report Generator
 
-A powerful Node.js application that generates executive weekly reports from Red Hat Jira data. Creates comprehensive reports combining automated Jira metrics with manual team input, designed specifically for Red Hat's Multi-Cluster Management Engineering team requirements.
+A powerful Node.js application that generates executive weekly reports from Red Hat Jira data with **Epic-first hierarchy** and advanced workflow automation. Creates comprehensive reports combining automated Jira metrics with manual team input, designed specifically for Red Hat's Multi-Cluster Management Engineering team requirements.
+
+**✨ NEW: Claude Workflow Integration** - Advanced workspace management with activity tracking, multi-agent coordination, and workflow automation commands.
 
 ## 🚀 Quick Start
 
@@ -19,17 +21,35 @@ npm start
 
 ## ✨ Key Features
 
+### 📊 **Epic-First Hierarchy Reports**
+- **🎯 Epic-Focused Structure** - Reports organized by Epics with Stories/Tasks grouped below
+- **📈 Epic Progress Tracking** - Visual progress bars with completion percentages
+- **🔗 Issue Relationships** - Clear parent-child relationships and Epic associations
+- **📋 Comprehensive Metadata** - Status, priority, assignee, and update dates for all issues
+
+### 🔄 **Advanced Workflow Management** 
+- **🤖 Claude Workflow Integration** - Multi-agent coordination and activity tracking
+- **📊 Workspace Analytics** - Comprehensive activity logging and performance metrics
+- **⚡ Workflow Commands** - `/jira-prime`, `/jira-status`, `/jira-health`, `/jira-sync`
+- **🔍 Health Monitoring** - Automated workspace health checks and recommendations
+
+### 🎯 **Project & Data Management**
 - **🎯 Interactive Project Selection** - Choose from 920+ Red Hat Jira projects
 - **📊 Advanced Board Selection** - Single boards, multiple boards, manual board IDs, or project-wide queries
 - **🆔 Manual Board ID Input** - Enter specific board IDs for precise board targeting
+- **🔄 Data Deduplication** - Automatically removes duplicate issues across multiple boards
+
+### 📄 **Multi-Format Reports & Export**
 - **📄 Shareable Formats** - Generate reports in Markdown, HTML (Google Docs), and Plain Text
 - **⚡ Smart Velocity Calculation** - Board-focused automated throughput metrics over 6 periods
-- **📝 Executive Report Format** - Matches Red Hat's executive reporting template
-- **🔗 Enhanced Issue Context** - Pretty links, Epic progress tracking, and parent issue links
-- **🎭 Manual Input Integration** - Collect team morale, celebrations, and milestones
 - **💾 Multiple Export Formats** - JSON, CSV, Markdown, HTML, and Plain Text reports
+- **🎭 Manual Input Integration** - Collect team morale, celebrations, and milestones
+
+### 🔐 **Enterprise Features**
 - **🔐 Secure PAT Authentication** - Uses Personal Access Tokens for Red Hat SSO
-- **🔄 Data Deduplication** - Automatically removes duplicate issues across multiple boards
+- **📝 Executive Report Format** - Matches Red Hat's executive reporting template
+- **🌐 Web UI Interface** - React TypeScript web interface for non-technical users
+- **📡 Real-time Updates** - WebSocket integration for live progress tracking
 
 ## 📋 Requirements Met
 
@@ -141,6 +161,29 @@ Interactive prompts for:
 - Forward-looking priorities
 - Velocity context
 
+### Query Issues by Component
+```bash
+npm run component -- --component="clusters-service-core-team" --days=7 --project=OCM
+```
+Query specific component issues with:
+- **Component filtering**: Target specific team/component
+- **Status filtering**: In Progress, Code Review, Review, Closed
+- **Issue types**: Epic and Story only
+- **Resolution**: Unresolved issues only
+- **Timeframe**: Customizable (default 7 days)
+- **Auto-export**: Results saved to CSV file
+
+**Parameters:**
+- `--component="component-name"` (required): Component to query
+- `--days=7` (optional): Number of days to look back (default: 7)
+- `--project=OCM` (optional): Project key (default: OCM)
+
+**Example output:**
+- Issues grouped by status
+- Epic progress tracking
+- Assignee and priority information
+- Automatic CSV export to `data/` directory
+
 ## 📊 Generated Reports
 
 ### Report Formats & File Structure
@@ -163,37 +206,56 @@ Multiple Boards: executive-report-OCM-multi-5boards-2025-08-06.md
 Project-Wide:    executive-report-OCM-2025-08-06.md
 ```
 
-### Report Content
+### Report Content - Epic-First Hierarchy ✨
 
-**All formats include:**
+**All formats include Epic-focused structure:**
 ```markdown
-# Weekly Team Report: Jul 30 - Aug 6, 2025
+# Weekly Team Report: Aug 13 - Aug 20, 2025
 
-## 1.0 Team Performance Metrics
+## 1.0 Epic Progress Overview
 ### 1.1 Team Velocity
-Average Velocity: 15 items
-Velocity Trend: Increasing
+Average Velocity: 8.7 items
+Velocity Trend: Decreasing
 
-### 1.2 Key Activities and Accomplishments
-- [OCM-17469](https://issues.redhat.com/browse/OCM-17469) - Feature toggle maintenance
-  Epic: [OCM-17467](https://issues.redhat.com/browse/OCM-17467) ████░░░░ 25% (2/8)
-- [OCM-17501](https://issues.redhat.com/browse/OCM-17501) - ROSA CLI Support improvements
-  Parent: [OCM-17500](https://issues.redhat.com/browse/OCM-17500)
+## 2.0 Epics and Related Work
 
-## 2.0 Team Morale and Culture
-### 2.1 Associate Morale
+### 2.0.1 Epic: [OCM-17803](https://issues.redhat.com/browse/OCM-17803) - API Rate Limiting Enhancement
+
+**Epic Status:** In Progress | **Priority:** High | **Assignee:** Team Lead
+**Progress:** 55% complete (6/11 issues)
+```
+Progress: [=====----] 55%
+```
+
+**Related Issues:**
+- **[OCM-17809](https://issues.redhat.com/browse/OCM-17809)** - CI Integration for Rate Limiting
+  - Status: Closed | Priority: Normal | Type: Story
+  - Assignee: Developer A | Updated: 2025-08-20
+  
+- **[OCM-14654](https://issues.redhat.com/browse/OCM-14654)** - Rate limit machine_pools endpoints  
+  - Status: In Progress | Priority: Normal | Type: Story
+  - Assignee: Developer B | Updated: 2025-08-20
+
+### 2.1.1 Epic: [OCM-17673](https://issues.redhat.com/browse/OCM-17673) - Access Transparency Service
+
+**Epic Status:** Completed | **Priority:** High | **Assignee:** Team Lead
+**Progress:** 100% complete (11/11 issues)
+```
+Progress: [==========] 100%
+```
+
+**Related Issues:**
+- **[OCM-17680](https://issues.redhat.com/browse/OCM-17680)** - Konflux Onboarding
+  - Status: Closed | Priority: Major | Type: Story
+  - Assignee: Developer C | Updated: 2025-08-20
+
+## 3.0 Team Morale and Culture
+### 3.1 Associate Morale
 [Manual input from npm run input]
 
-## 3.0 Roadmap and Forward-Looking
-### 3.1 Upcoming Priorities
-[In-progress issues + manual priorities]
-
-## 4.0 Enhanced Features (NEW)
-### 4.1 Pretty Links & Epic Progress
-- All issues have clickable Red Hat Jira links
-- Epic progress bars show completion percentage
-- Parent issue links for sub-tasks
-- Board-specific velocity calculations
+## 4.0 Forward-Looking Items
+### 4.1 Upcoming Priorities
+[Strategic priorities and next period focus]
 ```
 
 ### Google Docs Format
@@ -209,15 +271,30 @@ The HTML format includes:
 
 ## 🎛️ Commands
 
+### 📊 **Report Generation**
 | Command | Purpose |
 |---------|---------|
-| `npm start` | Generate standard markdown report |
+| `npm start` | Generate Epic-focused markdown report |
 | `npm run report:all` | Generate all formats (MD, HTML, TXT) |
 | `npm run share` | Generate HTML format for Google Docs |
 | `npm run report:html` | Generate HTML format only |
 | `npm run report:text` | Generate plain text format only |
+
+### 🔄 **Workflow Management** ✨ NEW
+| Command | Purpose |
+|---------|---------|
+| `npm run prime` | Initialize/refresh workspace configuration |
+| `npm run status` | Comprehensive workspace status report |
+| `npm run health` | Workspace health check and recommendations |
+| `npm run sync` | Sync project configurations |
+| `npm run workspace` | Alias for status command |
+
+### ⚙️ **Configuration & Setup**
+| Command | Purpose |
+|---------|---------|
 | `npm run select` | Interactive project/multi-board selection |
 | `npm run input` | Collect manual qualitative data |
+| `npm run component` | Query issues by component with specific criteria |
 | `npm run init` | Initialize Jira CLI (if needed) |
 
 ### Format Options
@@ -229,23 +306,37 @@ The HTML format includes:
 ## 📁 Project Structure
 
 ```
-Jira_summary/
-├── 📄 HOW_TO_GUIDE.md           # Detailed usage guide
-├── 📄 README.md                 # This file
-├── 📄 .env.example              # Environment template
-├── 📄 package.json              # Dependencies and scripts
-├── 🏗️ config.js                 # Configuration management
-├── 🔌 jira-cli-client.js        # Jira API client with direct REST
-├── 📝 project-selector.js       # Interactive project selection
-├── 🎨 report-generator.js       # Executive report generation
-├── 💬 manual-input.js           # Manual data collection
-├── 🚀 index.js                  # Main application
+jira_reeport/
+├── 📄 HOW_TO_GUIDE.md             # Detailed usage guide
+├── 📄 README.md                   # This file
+├── 📄 UI_README.md                # Web UI documentation
+├── 📄 .env.example                # Environment template
+├── 📄 package.json                # Dependencies and scripts
+├── 🏗️ config.js                   # Configuration management
+├── 🔌 jira-cli-client.js          # Enhanced Jira API client (fetch-based)
+├── 📝 project-selector.js         # Interactive project selection
+├── 🎨 report-generator.js         # Epic-focused report generation
+├── 💬 manual-input.js             # Manual data collection
+├── 🚀 index.js                    # Main application with workflow commands
+├── 🌐 server.js                   # Express server for web UI
+├── 🔄 activity-tracker.js         # Workspace activity tracking ✨ NEW
+├── ⚡ workflow-commands.js        # Claude Workflow integration ✨ NEW
+├── 📄 workspace-activity.json     # Activity tracking data ✨ NEW
+├── 📄 jira-workspace-config.json  # Workspace configuration ✨ NEW
 ├── 📁 templates/
-│   └── weekly-summary.hbs       # Executive report template
-├── 📁 reports/                  # Generated reports
-├── 📁 data/                     # Raw data exports (JSON/CSV)
-├── 📄 manual-input.json         # Saved manual input
-└── 📄 project-selection.json    # Saved project selection
+│   ├── epic-focused.hbs           # Epic-first hierarchy template ✨ NEW
+│   ├── weekly-summary.hbs         # Traditional executive template
+│   └── google-docs.hbs            # HTML format template
+├── 📁 ui/                         # React TypeScript web interface
+│   ├── src/                       # React components and services
+│   └── package.json               # UI dependencies
+├── 📁 reports/                    # Generated reports by format
+│   ├── markdown/                  # Markdown reports
+│   ├── google-docs/               # HTML reports for sharing
+│   └── plain-text/                # Plain text reports
+├── 📁 data/                       # Raw data exports (JSON/CSV)
+├── 📄 manual-input.json           # Saved manual input
+└── 📄 project-selection.json      # Saved project selection
 ```
 
 ## 🔍 How It Works

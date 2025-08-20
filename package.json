@@ -13,6 +13,10 @@
   },
   "scripts": {
     "start": "node index.js report",
+    "server": "node server.js",
+    "ui": "cd ui && npm run dev",
+    "dev": "concurrently \"npm run server\" \"npm run ui\"",
+    "build": "cd ui && npm run build",
     "report": "node index.js report",
     "report:all": "node index.js report --format=all",
     "report:html": "node index.js report --format=html",
@@ -22,12 +26,17 @@
     "select": "node index.js select",
     "init": "node index.js init",
     "input": "node index.js input",
-    "dev": "node index.js report",
+    "component": "node index.js component",
     "enhanced": "node enhanced-cli.js",
     "enhanced:security": "node enhanced-cli.js security",
     "enhanced:assign": "node enhanced-cli.js assign",
     "enhanced:export": "node enhanced-cli.js export",
     "enhanced:query": "node enhanced-cli.js query",
+    "prime": "node index.js workflow /jira-prime",
+    "status": "node index.js workflow /jira-status",
+    "sync": "node index.js workflow /jira-sync",
+    "health": "node index.js workflow /jira-health",
+    "workspace": "node index.js workflow /jira-status",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -53,7 +62,11 @@
   },
   "dependencies": {
     "dotenv": "^16.3.0",
-    "handlebars": "^4.7.8"
+    "handlebars": "^4.7.8",
+    "express": "^4.18.2",
+    "socket.io": "^4.7.2",
+    "cors": "^2.8.5",
+    "concurrently": "^8.2.0"
   },
   "devDependencies": {},
   "peerDependencies": {},
